@@ -38,7 +38,7 @@ public with sharing class CommissionEventHandler {
         switch on eventType {
             // ── Standard commission processing ──
             when 'DEAL_CLOSED' {
-                CommissionService.processOpportunity(opportunityId);
+                handleDealClosed(opportunityId, evt);
             }
 
             // ── Post-close changes: check if commissions exist, then reprocess ──
@@ -60,6 +60,125 @@ public with sharing class CommissionEventHandler {
             when 'AMOUNT_CHANGED', 'CLOSE_DATE_CHANGED', 'STAGE_CHANGED' {
                 handlePreCloseChange(opportunityId, eventType);
             }
+        }
+    }
+
+    /**
+     * @description Handle deal closed. This may be a FIRST close or a RE-CLOSE
+     *              (after Won→Reopened→Won or Won→Lost→Reopened→Won).
+     *
+     *              Scenarios:
+     *              1. First-time close (no prior commissions)  → standard calculation
+     *              2. Re-close, same amount, same period       → verify originals, no new calcs
+     *              3. Re-close, amount changed                 → adjustment entries for delta
+     *              4. Re-close, different period (old frozen)  → adjustment in current period
+     *              5. Re-close after clawback (Won→Lost→Reopen→Won) → reverse clawback + recalculate
+     */
+    private void handleDealClosed(Id opportunityId, Commission_Event__e evt) {
+        // Query ALL existing commission records for this deal (any status, any type)
+        List<Comp_Calculation__c> existingCalcs = [
+            SELECT Id, Calculation_Status__c, Adjustment_Type__c,
+                   Commisionable_Value__c, Contract_Date2__c, Comp_Plan__c
+            FROM Comp_Calculation__c
+            WHERE Opportunity__c = :opportunityId
+            ORDER BY CreatedDate DESC
+            LIMIT 500
+        ];
+
+        if (existingCalcs.isEmpty()) {
+            // ── SCENARIO 1: First-time close — standard processing ──
+            CommissionService.processOpportunity(opportunityId);
+            return;
+        }
+
+        // Categorize existing records
+        Boolean hasClawbacks = false;
+        Boolean hasValidatedOrPaid = false;
+        Boolean hasProjectedOnly = true;
+        Decimal priorCommissionableTotal = 0;
+        Date priorCloseDate;
+
+        for (Comp_Calculation__c calc : existingCalcs) {
+            if (calc.Adjustment_Type__c == 'Clawback') {
+                hasClawbacks = true;
+            }
+            if (calc.Calculation_Status__c == 'Validated' || calc.Calculation_Status__c == 'Paid') {
+                hasValidatedOrPaid = true;
+                hasProjectedOnly = false;
+            }
+            if (calc.Adjustment_Type__c == 'Original'
+                && calc.Calculation_Status__c != 'Reversed') {
+                priorCommissionableTotal += (calc.Commisionable_Value__c != null ? calc.Commisionable_Value__c : 0);
+                if (priorCloseDate == null && calc.Contract_Date2__c != null) {
+                    priorCloseDate = calc.Contract_Date2__c;
+                }
+            }
+        }
+
+        if (hasClawbacks) {
+            // ── SCENARIO 5: Re-close after clawback (Won→Lost→Reopened→Won) ──
+            // Clawback needs to be reversed, then commissions recalculated.
+            // This is complex — flag for admin with clear context.
+            createReprocessingAlert(opportunityId, 'RECLOSE_AFTER_CLAWBACK', evt);
+            return;
+        }
+
+        if (hasProjectedOnly) {
+            // Only Projected from a prior cycle — delete and recalculate fresh
+            deleteProjectedCalculations(opportunityId);
+            CommissionService.processOpportunity(opportunityId);
+            return;
+        }
+
+        // ── Has Validated/Paid originals — this is a re-close ──
+        // Check if the close date falls in a frozen period
+        Boolean priorInFrozenPeriod = false;
+        if (priorCloseDate != null) {
+            Integer frozenCount = [
+                SELECT COUNT()
+                FROM Forecast_Period__c
+                WHERE Status__c = 'Frozen'
+                AND Start_Date__c <= :priorCloseDate
+                AND End_Date__c >= :priorCloseDate
+                LIMIT 1
+            ];
+            priorInFrozenPeriod = (frozenCount > 0);
+        }
+
+        // Get current opportunity amount for comparison
+        Opportunity opp = [
+            SELECT Amount, CloseDate
+            FROM Opportunity
+            WHERE Id = :opportunityId
+            LIMIT 1
+        ];
+
+        if (opp == null) {
+            return;
+        }
+
+        // Compare: has the amount or period changed?
+        Boolean amountChanged = (opp.Amount != priorCommissionableTotal);
+        Boolean periodChanged = (priorCloseDate != null && opp.CloseDate != priorCloseDate);
+
+        if (!amountChanged && !periodChanged) {
+            // ── SCENARIO 2: Re-close, same amount, same period ──
+            // Originals are still valid. No new commissions needed.
+            // Log for audit but take no action.
+            System.debug(LoggingLevel.INFO,
+                'DEAL_CLOSED (re-close): Opp ' + opportunityId +
+                ' re-closed with same amount and period. No commission action needed.');
+            return;
+        }
+
+        if (priorInFrozenPeriod) {
+            // ── SCENARIO 4: Re-close but original commissions in frozen period ──
+            // Cannot modify frozen entries. Alert admin to create adjustments in current period.
+            createReprocessingAlert(opportunityId, 'RECLOSE_FROZEN_PERIOD_ADJUSTMENT', evt);
+        } else {
+            // ── SCENARIO 3: Re-close, amount or period changed, period not frozen ──
+            // Admin needs to review and trigger reprocessing (reversal + new calculation).
+            createReprocessingAlert(opportunityId, 'RECLOSE_DELTA_REPROCESSING', evt);
         }
     }
 
@@ -343,6 +462,15 @@ public with sharing class CommissionEventHandler {
             }
             when 'CLAWBACK_REVERSAL_REVIEW' {
                 return 'Deal ' + opportunityId + ' was reopened after being lost (Won → Lost → Reopened). A clawback was previously processed. Admin must review whether the clawback should be reversed.';
+            }
+            when 'RECLOSE_AFTER_CLAWBACK' {
+                return 'Deal ' + opportunityId + ' re-closed after a prior Won→Lost→Reopened cycle. A clawback was previously processed. The clawback must be reversed and commissions recalculated at current values. Admin action required.';
+            }
+            when 'RECLOSE_FROZEN_PERIOD_ADJUSTMENT' {
+                return 'Deal ' + opportunityId + ' re-closed with changed amount/period, but the original commissions are in a FROZEN forecast period. Frozen entries cannot be modified — create adjustment entries in the current period for the delta.';
+            }
+            when 'RECLOSE_DELTA_REPROCESSING' {
+                return 'Deal ' + opportunityId + ' re-closed with changed amount or close date. Original Validated/Paid commissions exist. Admin must trigger reprocessing (system will create reversal + new calculation at updated values).';
             }
             when else {
                 return 'Deal ' + opportunityId + ' was modified after commissions were validated/paid. Manual reprocessing required (event: ' + alertType + ').';
