@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Adapter_Type__c</fullName>
+    <label>Adapter Type</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Gong</fullName><default>false</default><label>Gong</label></value>
+            <value><fullName>Zoom_RA</fullName><default>false</default><label>Zoom_RA</label></value>
+            <value><fullName>Dialpad</fullName><default>false</default><label>Dialpad</label></value>
+            <value><fullName>Chorus</fullName><default>false</default><label>Chorus</label></value>
+            <value><fullName>Momentum</fullName><default>false</default><label>Momentum</label></value>
+            <value><fullName>People_AI</fullName><default>false</default><label>People_AI</label></value>
+            <value><fullName>CRM</fullName><default>false</default><label>CRM</label></value>
+            <value><fullName>Email_Metadata</fullName><default>false</default><label>Email_Metadata</label></value>
+            <value><fullName>Custom_HTTP</fullName><default>false</default><label>Custom_HTTP</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

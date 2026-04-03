@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Previous_Level_Override__c</fullName>
+    <label>Previous Level Override</label>
+    <description>Override for this record by the level below</description>
+    <type>Lookup</type>
+    <referenceTo>Forecast_Override__c</referenceTo>
+    <relationshipLabel>Next Level Overrides</relationshipLabel>
+    <relationshipName>Next_Level_Overrides</relationshipName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

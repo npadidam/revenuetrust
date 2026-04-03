@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Behavior_Detection_Config__c</fullName>
+    <description>The parent behavior detection configuration this rule belongs to.</description>
+    <label>Behavior Detection Config</label>
+    <type>MasterDetail</type>
+    <referenceTo>Behavior_Detection_Config__c</referenceTo>
+    <relationshipLabel>Detection Rules</relationshipLabel>
+    <relationshipName>Detection_Rules</relationshipName>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

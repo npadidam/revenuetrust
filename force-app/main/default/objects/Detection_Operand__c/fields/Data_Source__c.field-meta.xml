@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Data_Source__c</fullName>
+    <description>The source system or data domain from which this operand derives its value.</description>
+    <label>Data Source</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Quota</fullName>
+                <default>false</default>
+                <label>Quota</label>
+            </value>
+            <value>
+                <fullName>Deal_Signal</fullName>
+                <default>false</default>
+                <label>Deal Signal</label>
+            </value>
+            <value>
+                <fullName>Forecast_Override</fullName>
+                <default>false</default>
+                <label>Forecast Override</label>
+            </value>
+            <value>
+                <fullName>Forecast_Period</fullName>
+                <default>false</default>
+                <label>Forecast Period</label>
+            </value>
+            <value>
+                <fullName>Comp_Calculation</fullName>
+                <default>false</default>
+                <label>Comp Calculation</label>
+            </value>
+            <value>
+                <fullName>CRM</fullName>
+                <default>false</default>
+                <label>CRM</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

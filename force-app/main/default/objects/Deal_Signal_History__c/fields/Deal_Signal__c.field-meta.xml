@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Deal_Signal__c</fullName>
+    <label>Deal Signal</label>
+    <type>MasterDetail</type>
+    <referenceTo>Deal_Signal__c</referenceTo>
+    <relationshipLabel>Signal History</relationshipLabel>
+    <relationshipName>Signal_History</relationshipName>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

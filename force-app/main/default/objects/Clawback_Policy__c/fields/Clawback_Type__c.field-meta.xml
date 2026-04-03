@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Clawback_Type__c</fullName>
+    <label>Clawback Type</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Full</fullName><default>false</default><label>Full</label></value>
+            <value><fullName>Time_Decayed</fullName><default>false</default><label>Time Decayed</label></value>
+            <value><fullName>Partial_Fixed</fullName><default>false</default><label>Partial Fixed</label></value>
+            <value><fullName>None</fullName><default>false</default><label>None</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

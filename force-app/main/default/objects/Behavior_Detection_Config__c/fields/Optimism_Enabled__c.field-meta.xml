@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Optimism_Enabled__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>Enables detection of excessive optimism in forecast submissions compared to actual outcomes.</description>
+    <label>Optimism Enabled</label>
+    <type>Checkbox</type>
+</CustomField>

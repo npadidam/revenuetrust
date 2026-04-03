@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Fiscal_Year_Start_Month__c</fullName>
+    <label>Fiscal Year Start Month</label>
+    <description>Month number (1-12) fiscal year starts</description>
+    <inlineHelpText>Month number (1-12) fiscal year starts</inlineHelpText>
+    <type>Number</type>
+    <precision>2</precision>
+    <scale>0</scale>
+    <required>false</required>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Pipeline_Record_Type_Filter__c</fullName>
+    <label>Pipeline Record Type Filter</label>
+    <description>Comma-separated Record Type Developer Names. Use LongTextArea for orgs with many record types.</description>
+    <type>LongTextArea</type>
+    <length>2000</length>
+    <visibleLines>3</visibleLines>
+</CustomField>

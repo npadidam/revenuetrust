@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Library__c</fullName>
+    <defaultValue>false</defaultValue>
+    <description>Indicates whether this template is part of the shared library available to all users for plan creation.</description>
+    <label>Is Library</label>
+    <type>Checkbox</type>
+</CustomField>

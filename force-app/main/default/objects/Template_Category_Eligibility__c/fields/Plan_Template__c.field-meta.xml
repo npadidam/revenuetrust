@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Plan_Template__c</fullName>
+    <description>The incentive plan template for this eligibility.</description>
+    <label>Plan Template</label>
+    <type>MasterDetail</type>
+    <referenceTo>Incentive_Plan_Template__c</referenceTo>
+    <relationshipLabel>Category Eligibilities</relationshipLabel>
+    <relationshipName>Category_Eligibilities</relationshipName>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

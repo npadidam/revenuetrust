@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Quota_Credit_Source__c</fullName>
+    <description>Determines how quota credit is calculated for transactions in this category.</description>
+    <label>Quota Credit Source</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Same_As_Commissionable</fullName>
+                <default>false</default>
+                <label>Same As Commissionable</label>
+            </value>
+            <value>
+                <fullName>Custom_Field</fullName>
+                <default>false</default>
+                <label>Custom Field</label>
+            </value>
+            <value>
+                <fullName>Percentage_Of_Commissionable</fullName>
+                <default>false</default>
+                <label>Percentage Of Commissionable</label>
+            </value>
+            <value>
+                <fullName>Fixed_Amount</fullName>
+                <default>false</default>
+                <label>Fixed Amount</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

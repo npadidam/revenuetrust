@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Trigger_Operator__c</fullName>
+    <label>Trigger Operator</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Equals</fullName><default>false</default><label>Equals</label></value>
+            <value><fullName>Not_Equals</fullName><default>false</default><label>Not Equals</label></value>
+            <value><fullName>Greater_Than</fullName><default>false</default><label>Greater Than</label></value>
+            <value><fullName>Less_Than</fullName><default>false</default><label>Less Than</label></value>
+            <value><fullName>Days_Since_Greater_Than</fullName><default>false</default><label>Days Since Greater Than</label></value>
+            <value><fullName>Is_True</fullName><default>false</default><label>Is True</label></value>
+            <value><fullName>Is_False</fullName><default>false</default><label>Is False</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

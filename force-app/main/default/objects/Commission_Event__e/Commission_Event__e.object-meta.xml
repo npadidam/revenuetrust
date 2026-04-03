@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Published when pipeline record changes trigger commission-relevant events (close, amount change, stage change).</description>
+    <eventType>HighVolume</eventType>
+    <label>Commission Event</label>
+    <pluralLabel>Commission Events</pluralLabel>
+    <publishBehavior>PublishAfterCommit</publishBehavior>
+</CustomObject>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Hourly_Snapshot_Interval__c</fullName>
+    <label>Hourly Snapshot Interval</label>
+    <description>Hours between snapshots in final-days mode</description>
+    <inlineHelpText>Hours between snapshots in final-days mode</inlineHelpText>
+    <type>Number</type>
+    <precision>2</precision>
+    <scale>0</scale>
+    <required>false</required>
+    <unique>false</unique>
+</CustomField>

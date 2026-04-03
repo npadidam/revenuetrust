@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cap_Type__c</fullName>
+    <label>Cap Type</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Per_Transaction</fullName><default>false</default><label>Per Transaction</label></value>
+            <value><fullName>Per_Period</fullName><default>false</default><label>Per Period</label></value>
+            <value><fullName>Per_Year</fullName><default>false</default><label>Per Year</label></value>
+            <value><fullName>Pct_Of_OTE</fullName><default>false</default><label>Pct Of OTE</label></value>
+            <value><fullName>Lifetime</fullName><default>false</default><label>Lifetime</label></value>
+            <value><fullName>Commissionable_Value_Cap</fullName><default>false</default><label>Commissionable Value Cap</label></value>
+            <value><fullName>Commissionable_Value_Floor</fullName><default>false</default><label>Commissionable Value Floor</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

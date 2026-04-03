@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Record_Type_Field__c</fullName>
+    <label>Record Type Field</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Plan_Assignment</fullName><default>false</default><label>Plan Assignment</label></value>
+            <value><fullName>Quota</fullName><default>false</default><label>Quota</label></value>
+            <value><fullName>Calculation</fullName><default>false</default><label>Calculation</label></value>
+            <value><fullName>Draw</fullName><default>false</default><label>Draw</label></value>
+            <value><fullName>Template</fullName><default>false</default><label>Template</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

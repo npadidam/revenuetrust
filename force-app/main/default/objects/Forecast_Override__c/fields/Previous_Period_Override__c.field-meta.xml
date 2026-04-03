@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Previous_Period_Override__c</fullName>
+    <label>Previous Period Override</label>
+    <description>Override for this record in prior period</description>
+    <type>Lookup</type>
+    <referenceTo>Forecast_Override__c</referenceTo>
+    <relationshipLabel>Next Period Overrides</relationshipLabel>
+    <relationshipName>Next_Period_Overrides</relationshipName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

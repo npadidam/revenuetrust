@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Point-in-time aggregates capturing forecast state at a given moment.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <label>Forecast Snapshot</label>
+    <nameField><label>Forecast Snapshot Name</label><type>AutoNumber</type><displayFormat>FS-{000000}</displayFormat></nameField>
+    <pluralLabel>Forecast Snapshots</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

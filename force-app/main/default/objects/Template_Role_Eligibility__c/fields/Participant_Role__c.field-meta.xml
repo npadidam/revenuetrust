@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Participant_Role__c</fullName>
+    <description>The participant role eligible for this plan template.</description>
+    <label>Participant Role</label>
+    <type>MasterDetail</type>
+    <referenceTo>Participant_Role__c</referenceTo>
+    <relationshipLabel>Template Eligibilities</relationshipLabel>
+    <relationshipName>Template_Eligibilities</relationshipName>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Cloned_From__c</fullName>
+    <description>Reference to the original comp plan this was cloned from.</description>
+    <label>Cloned From</label>
+    <type>Lookup</type>
+    <referenceTo>Comp_Plan__c</referenceTo>
+    <relationshipLabel>Cloned Plans</relationshipLabel>
+    <relationshipName>Cloned_Plans</relationshipName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

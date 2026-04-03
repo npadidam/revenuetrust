@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Parent_Quota__c</fullName>
+    <description>Reference to the parent quota for hierarchical quota structures.</description>
+    <label>Parent Quota</label>
+    <type>Lookup</type>
+    <referenceTo>Quota__c</referenceTo>
+    <relationshipLabel>Child Quotas</relationshipLabel>
+    <relationshipName>Child_Quotas</relationshipName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

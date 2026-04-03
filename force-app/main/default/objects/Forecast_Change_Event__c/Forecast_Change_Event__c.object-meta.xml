@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Immutable history ledger recording every forecast change event.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <label>Forecast Change Event</label>
+    <nameField><label>Forecast Change Event Name</label><type>AutoNumber</type><displayFormat>FCE-{000000}</displayFormat></nameField>
+    <pluralLabel>Forecast Change Events</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

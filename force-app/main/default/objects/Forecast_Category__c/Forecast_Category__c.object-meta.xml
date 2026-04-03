@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Defines a forecast category within a Forecast Configuration, such as Pipeline, Best Case, Commit, or Closed.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <label>Forecast Category</label>
+    <nameField><label>Forecast Category Name</label><type>Text</type></nameField>
+    <pluralLabel>Forecast Categories</pluralLabel>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

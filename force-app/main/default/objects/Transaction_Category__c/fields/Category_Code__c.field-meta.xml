@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Category_Code__c</fullName>
+    <description>Unique code identifying this transaction category. Used as an external identifier for integrations and data loads.</description>
+    <externalId>true</externalId>
+    <label>Category Code</label>
+    <length>20</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>true</unique>
+</CustomField>

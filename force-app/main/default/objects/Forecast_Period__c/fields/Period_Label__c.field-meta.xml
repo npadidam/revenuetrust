@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Period_Label__c</fullName>
+    <label>Period Label</label>
+    <description>Auto-generated, e.g. Q2 FY2027</description>
+    <inlineHelpText>Auto-generated, e.g. Q2 FY2027</inlineHelpText>
+    <type>Text</type>
+    <length>50</length>
+    <required>false</required>
+    <unique>false</unique>
+</CustomField>

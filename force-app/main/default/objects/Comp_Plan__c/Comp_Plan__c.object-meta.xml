@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Represents an individual compensation plan assigned to a sales representative, linking a plan template to a participant with specific terms and status tracking.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <label>Comp Plan</label>
+    <nameField>
+        <displayFormat>CP-{00000}</displayFormat>
+        <label>Comp Plan Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Comp Plans</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

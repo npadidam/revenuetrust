@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Windfall_Treatment__c</fullName>
+    <label>Windfall Treatment</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Ignored</fullName><default>false</default><label>Ignored</label></value>
+            <value><fullName>Deferred_To_Next_Period</fullName><default>false</default><label>Deferred To Next Period</label></value>
+            <value><fullName>Reduced_Rate</fullName><default>false</default><label>Reduced Rate</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

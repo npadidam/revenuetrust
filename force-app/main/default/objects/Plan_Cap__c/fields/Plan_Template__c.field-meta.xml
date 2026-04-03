@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Plan_Template__c</fullName>
+    <label>Plan Template</label>
+    <type>MasterDetail</type>
+    <referenceTo>Incentive_Plan_Template__c</referenceTo>
+    <relationshipLabel>Plan Caps</relationshipLabel>
+    <relationshipName>Plan_Caps</relationshipName>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>CRM_Divergence__c</fullName>
+    <label>CRM Divergence</label>
+    <description>CRM Divergence</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

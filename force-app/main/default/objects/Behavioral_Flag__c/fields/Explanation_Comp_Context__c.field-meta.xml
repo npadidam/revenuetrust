@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Explanation_Comp_Context__c</fullName>
+    <label>2. Compensation Context</label>
+    <description>2. Compensation Context</description>
+    <type>LongTextArea</type>
+    <length>2000</length>
+    <visibleLines>5</visibleLines>
+</CustomField>

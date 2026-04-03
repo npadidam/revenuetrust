@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Dependent_Template__c</fullName>
+    <description>Another plan template that must reach a threshold before this plan pays out.</description>
+    <label>Dependent Template</label>
+    <type>Lookup</type>
+    <referenceTo>Incentive_Plan_Template__c</referenceTo>
+    <relationshipLabel>Dependent Templates</relationshipLabel>
+    <relationshipName>Dependent_Templates</relationshipName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Fiscal_Year__c</fullName>
+    <description>The fiscal year this quota belongs to.</description>
+    <label>Fiscal Year</label>
+    <type>Text</type>
+    <length>10</length>
+    <required>false</required>
+    <unique>false</unique>
+</CustomField>

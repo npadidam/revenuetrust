@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Release_Mode__c</fullName>
+    <label>Release Mode</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Binary_At_Threshold</fullName><default>false</default><label>Binary At Threshold</label></value>
+            <value><fullName>Proportional</fullName><default>false</default><label>Proportional</label></value>
+            <value><fullName>Milestone_Only</fullName><default>false</default><label>Milestone Only</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

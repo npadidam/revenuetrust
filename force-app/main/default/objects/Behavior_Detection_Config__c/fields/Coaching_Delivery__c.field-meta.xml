@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Coaching_Delivery__c</fullName>
+    <description>Channel through which coaching nudges are delivered to reps and managers.</description>
+    <label>Coaching Delivery</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>false</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>In_App_Only</fullName>
+                <default>false</default>
+                <label>In App Only</label>
+            </value>
+            <value>
+                <fullName>In_App_And_Slack</fullName>
+                <default>false</default>
+                <label>In App And Slack</label>
+            </value>
+            <value>
+                <fullName>In_App_And_Teams</fullName>
+                <default>false</default>
+                <label>In App And Teams</label>
+            </value>
+            <value>
+                <fullName>In_App_And_Email</fullName>
+                <default>false</default>
+                <label>In App And Email</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

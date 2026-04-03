@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Accuracy_Enabled__c</fullName>
+    <defaultValue>true</defaultValue>
+    <description>Enables detection of forecast accuracy patterns to identify consistently inaccurate forecasters.</description>
+    <label>Accuracy Enabled</label>
+    <type>Checkbox</type>
+</CustomField>

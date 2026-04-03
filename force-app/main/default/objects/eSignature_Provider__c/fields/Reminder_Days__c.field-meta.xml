@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Reminder_Days__c</fullName>
+    <description>Comma-separated list of day intervals at which signing reminders are sent to recipients (e.g., 3,7,10).</description>
+    <label>Reminder Days</label>
+    <length>50</length>
+    <required>false</required>
+    <type>Text</type>
+    <unique>false</unique>
+</CustomField>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Trigger_Type__c</fullName>
+    <description>The event that triggers commission calculation.</description>
+    <label>Trigger Type</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Booking</fullName>
+                <default>false</default>
+                <label>Booking</label>
+            </value>
+            <value>
+                <fullName>Collection</fullName>
+                <default>false</default>
+                <label>Collection</label>
+            </value>
+            <value>
+                <fullName>Milestone</fullName>
+                <default>false</default>
+                <label>Milestone</label>
+            </value>
+            <value>
+                <fullName>Revenue_Recognition</fullName>
+                <default>false</default>
+                <label>Revenue Recognition</label>
+            </value>
+            <value>
+                <fullName>Renewal_Date</fullName>
+                <default>false</default>
+                <label>Renewal Date</label>
+            </value>
+            <value>
+                <fullName>Activity</fullName>
+                <default>false</default>
+                <label>Activity</label>
+            </value>
+            <value>
+                <fullName>Monthly_Recurring</fullName>
+                <default>false</default>
+                <label>Monthly Recurring</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Action_Type__c</fullName>
+    <label>Action Type</label>
+    <description>Action Type</description>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Require_Justification</fullName><default>false</default><label>Require_Justification</label></value>
+            <value><fullName>Require_Approval</fullName><default>false</default><label>Require_Approval</label></value>
+            <value><fullName>Escalate</fullName><default>false</default><label>Escalate</label></value>
+            <value><fullName>Alert</fullName><default>false</default><label>Alert</label></value>
+            <value><fullName>Warn</fullName><default>false</default><label>Warn</label></value>
+            <value><fullName>Badge</fullName><default>false</default><label>Badge</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

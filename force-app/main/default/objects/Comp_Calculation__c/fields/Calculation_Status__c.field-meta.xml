@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Calculation_Status__c</fullName>
+    <externalId>false</externalId>
+    <label>Calculation Status</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Projected</fullName><default>false</default><label>Projected</label></value>
+            <value><fullName>Validated</fullName><default>false</default><label>Validated</label></value>
+            <value><fullName>Paid</fullName><default>false</default><label>Paid</label></value>
+            <value><fullName>Reversed</fullName><default>false</default><label>Reversed</label></value>
+            <value><fullName>Clawback</fullName><default>false</default><label>Clawback</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

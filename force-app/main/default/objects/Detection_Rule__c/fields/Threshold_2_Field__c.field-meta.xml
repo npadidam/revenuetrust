@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Threshold_2_Field__c</fullName>
+    <description>API name of the second field used in threshold evaluation.</description>
+    <label>Threshold 2 Field</label>
+    <type>Text</type>
+    <length>100</length>
+    <required>false</required>
+    <unique>false</unique>
+</CustomField>

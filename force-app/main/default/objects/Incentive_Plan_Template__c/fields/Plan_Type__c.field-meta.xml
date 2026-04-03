@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Plan_Type__c</fullName>
+    <description>The commission plan type defining the rate structure.</description>
+    <label>Plan Type</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Flat</fullName>
+                <default>false</default>
+                <label>Flat</label>
+            </value>
+            <value>
+                <fullName>Tiered</fullName>
+                <default>false</default>
+                <label>Tiered</label>
+            </value>
+            <value>
+                <fullName>Accelerated</fullName>
+                <default>false</default>
+                <label>Accelerated</label>
+            </value>
+            <value>
+                <fullName>Gross_Margin</fullName>
+                <default>false</default>
+                <label>Gross Margin</label>
+            </value>
+            <value>
+                <fullName>Recurring</fullName>
+                <default>false</default>
+                <label>Recurring</label>
+            </value>
+            <value>
+                <fullName>Milestone</fullName>
+                <default>false</default>
+                <label>Milestone</label>
+            </value>
+            <value>
+                <fullName>Activity_Based</fullName>
+                <default>false</default>
+                <label>Activity Based</label>
+            </value>
+            <value>
+                <fullName>Team_Pool</fullName>
+                <default>false</default>
+                <label>Team Pool</label>
+            </value>
+            <value>
+                <fullName>Team_Override</fullName>
+                <default>false</default>
+                <label>Team Override</label>
+            </value>
+            <value>
+                <fullName>SPIFF</fullName>
+                <default>false</default>
+                <label>SPIFF</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

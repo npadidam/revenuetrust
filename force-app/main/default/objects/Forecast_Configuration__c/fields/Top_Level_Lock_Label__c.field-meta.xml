@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Top_Level_Lock_Label__c</fullName>
+    <label>Top Level Lock Label</label>
+    <description>Label for the top-level freeze/lock action</description>
+    <inlineHelpText>Label for the top-level freeze/lock action</inlineHelpText>
+    <type>Text</type>
+    <length>30</length>
+    <required>false</required>
+    <unique>false</unique>
+</CustomField>

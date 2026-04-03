@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Transaction_Category__c</fullName>
+    <description>The transaction category eligible for this plan template.</description>
+    <label>Transaction Category</label>
+    <type>MasterDetail</type>
+    <referenceTo>Transaction_Category__c</referenceTo>
+    <relationshipLabel>Template Eligibilities</relationshipLabel>
+    <relationshipName>Template_Eligibilities_Cat</relationshipName>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

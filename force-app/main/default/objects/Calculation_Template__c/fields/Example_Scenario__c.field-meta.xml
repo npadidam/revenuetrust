@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Example_Scenario__c</fullName>
+    <description>Illustrative example scenario demonstrating how the calculation template produces results with sample data.</description>
+    <label>Example Scenario</label>
+    <length>10000</length>
+    <type>LongTextArea</type>
+    <visibleLines>10</visibleLines>
+</CustomField>

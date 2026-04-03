@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>The immutable financial ledger that records every compensation calculation for audit and payment tracking.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <label>Comp Calculation</label>
+    <nameField>
+        <displayFormat>CC-{000000}</displayFormat>
+        <label>Comp Calculation Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Comp Calculations</pluralLabel>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

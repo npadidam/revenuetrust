@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Event_Type__c</fullName>
+    <description>DEAL_CLOSED, AMOUNT_CHANGED, STAGE_CHANGED, CLOSE_DATE_CHANGED, CATEGORY_CHANGED</description>
+    <isFilteringDisabled>false</isFilteringDisabled>
+    <isNameField>false</isNameField>
+    <isSortingDisabled>false</isSortingDisabled>
+    <label>Event Type</label>
+    <length>50</length>
+    <type>Text</type>
+</CustomField>

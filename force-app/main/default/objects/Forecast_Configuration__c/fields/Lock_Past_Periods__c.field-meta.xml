@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lock_Past_Periods__c</fullName>
+    <label>Lock Past Periods</label>
+    <description>Lock Past Periods</description>
+    <inlineHelpText>Lock Past Periods</inlineHelpText>
+    <type>Checkbox</type>
+    <defaultValue>true</defaultValue>
+</CustomField>

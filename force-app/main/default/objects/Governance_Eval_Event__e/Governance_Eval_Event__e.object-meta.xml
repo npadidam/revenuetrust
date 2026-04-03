@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Published when governance rules need evaluation on a forecast override action.</description>
+    <eventType>HighVolume</eventType>
+    <label>Governance Eval Event</label>
+    <pluralLabel>Governance Eval Events</pluralLabel>
+    <publishBehavior>PublishAfterCommit</publishBehavior>
+</CustomObject>

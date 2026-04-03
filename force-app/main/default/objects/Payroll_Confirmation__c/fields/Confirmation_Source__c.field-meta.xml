@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Confirmation_Source__c</fullName>
+    <description>How the payroll confirmation was received.</description>
+    <label>Confirmation Source</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>API_Callback</fullName>
+                <default>false</default>
+                <label>API_Callback</label>
+            </value>
+            <value>
+                <fullName>File_Upload</fullName>
+                <default>false</default>
+                <label>File_Upload</label>
+            </value>
+            <value>
+                <fullName>Manual_Confirm</fullName>
+                <default>false</default>
+                <label>Manual_Confirm</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

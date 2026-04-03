@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Defines product-level eligibility rules for incentive plan templates, specifying which products or product families qualify under each template.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableHistory>false</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <label>Template Product Eligibility</label>
+    <nameField>
+        <displayFormat>TPE-{00000}</displayFormat>
+        <label>Template Product Eligibility Number</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Template Product Eligibilities</pluralLabel>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

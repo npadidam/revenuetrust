@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Commissionable_Value_Override__c</fullName>
+    <description>Overrides the default commissionable value from Transaction Category. Null means use Transaction Category default.</description>
+    <label>Commissionable Value Override</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Full_Amount</fullName>
+                <default>false</default>
+                <label>Full Amount</label>
+            </value>
+            <value>
+                <fullName>Net_Amount</fullName>
+                <default>false</default>
+                <label>Net Amount</label>
+            </value>
+            <value>
+                <fullName>Gross_Margin</fullName>
+                <default>false</default>
+                <label>Gross Margin</label>
+            </value>
+            <value>
+                <fullName>Custom_Formula</fullName>
+                <default>false</default>
+                <label>Custom Formula</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

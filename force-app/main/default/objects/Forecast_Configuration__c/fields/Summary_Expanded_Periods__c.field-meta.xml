@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Summary_Expanded_Periods__c</fullName>
+    <label>Summary Expanded Periods</label>
+    <description>JSON: which period types to expand in Layout C</description>
+    <inlineHelpText>JSON: which period types to expand in Layout C</inlineHelpText>
+    <type>Text</type>
+    <length>200</length>
+    <required>false</required>
+    <unique>false</unique>
+</CustomField>

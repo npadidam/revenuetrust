@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Frozen_By__c</fullName>
+    <label>Frozen By</label>
+    <description>Frozen By</description>
+    <inlineHelpText>Frozen By</inlineHelpText>
+    <type>Lookup</type>
+    <referenceTo>User</referenceTo>
+    <relationshipLabel>Frozen Forecast Periods</relationshipLabel>
+    <relationshipName>Frozen_Forecast_Periods</relationshipName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

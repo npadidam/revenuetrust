@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Hold_Reason__c</fullName>
+    <externalId>false</externalId>
+    <label>Hold Reason</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Collection_Pending</fullName><default>false</default><label>Collection_Pending</label></value>
+            <value><fullName>Milestone_Pending</fullName><default>false</default><label>Milestone_Pending</label></value>
+            <value><fullName>Approval_Pending</fullName><default>false</default><label>Approval_Pending</label></value>
+            <value><fullName>Time_Hold</fullName><default>false</default><label>Time_Hold</label></value>
+            <value><fullName>Custom_Hold</fullName><default>false</default><label>Custom_Hold</label></value>
+            <value><fullName>None</fullName><default>false</default><label>None</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

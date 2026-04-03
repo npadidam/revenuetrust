@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Snapshot_Type__c</fullName>
+    <label>Snapshot Type</label>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Nightly</fullName><default>false</default><label>Nightly</label></value>
+            <value><fullName>Submit</fullName><default>false</default><label>Submit</label></value>
+            <value><fullName>Freeze</fullName><default>false</default><label>Freeze</label></value>
+            <value><fullName>Weekly</fullName><default>false</default><label>Weekly</label></value>
+            <value><fullName>Manual</fullName><default>false</default><label>Manual</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

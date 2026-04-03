@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Territory__c</fullName>
+    <description>The territory associated with this comp plan.</description>
+    <label>Territory</label>
+    <type>Lookup</type>
+    <referenceTo>Territory__c</referenceTo>
+    <relationshipLabel>Comp Plans</relationshipLabel>
+    <relationshipName>Comp_Plans_Territory</relationshipName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

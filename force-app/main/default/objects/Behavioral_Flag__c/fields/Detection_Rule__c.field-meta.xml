@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Detection_Rule__c</fullName>
+    <label>Detection Rule</label>
+    <description>Detection Rule</description>
+    <type>Lookup</type>
+    <referenceTo>Detection_Rule__c</referenceTo>
+    <relationshipLabel>Behavioral Flags</relationshipLabel>
+    <relationshipName>Behavioral_Flags_Rule</relationshipName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

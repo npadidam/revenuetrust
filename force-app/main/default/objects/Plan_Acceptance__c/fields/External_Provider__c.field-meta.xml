@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>External_Provider__c</fullName>
+    <externalId>false</externalId>
+    <label>External Provider</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <trackTrending>false</trackTrending>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>DocuSign</fullName><default>false</default><label>DocuSign</label></value>
+            <value><fullName>AdobeSign</fullName><default>false</default><label>AdobeSign</label></value>
+            <value><fullName>HelloSign</fullName><default>false</default><label>HelloSign</label></value>
+            <value><fullName>PandaDoc</fullName><default>false</default><label>PandaDoc</label></value>
+            <value><fullName>None</fullName><default>false</default><label>None</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

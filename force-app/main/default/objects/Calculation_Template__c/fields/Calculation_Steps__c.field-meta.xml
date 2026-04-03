@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Calculation_Steps__c</fullName>
+    <description>Detailed step-by-step calculation logic for the template, typically stored as structured text or JSON.</description>
+    <label>Calculation Steps</label>
+    <length>10000</length>
+    <type>LongTextArea</type>
+    <visibleLines>10</visibleLines>
+</CustomField>

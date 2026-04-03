@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Probability_Threshold__c</fullName>
+    <description>Minimum opportunity probability percentage required for a transaction to qualify under this category.</description>
+    <label>Probability Threshold</label>
+    <precision>7</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <type>Percent</type>
+</CustomField>

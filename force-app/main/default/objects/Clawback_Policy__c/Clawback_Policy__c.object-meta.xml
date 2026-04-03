@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>Defines clawback rules and recovery windows for commission reversal scenarios.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <label>Clawback Policy</label>
+    <nameField><label>Clawback Policy Name</label><type>Text</type></nameField>
+    <pluralLabel>Clawback Policies</pluralLabel>
+    <sharingModel>ControlledByParent</sharingModel>
+</CustomObject>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Flag_Type__c</fullName>
+    <label>Flag Type</label>
+    <description>Flag Type</description>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Sandbagging</fullName><default>false</default><label>Sandbagging</label></value>
+            <value><fullName>Optimism_Bias</fullName><default>false</default><label>Optimism_Bias</label></value>
+            <value><fullName>Threshold_Approach</fullName><default>false</default><label>Threshold_Approach</label></value>
+            <value><fullName>Timing_Concentration</fullName><default>false</default><label>Timing_Concentration</label></value>
+            <value><fullName>Period_Slip_Loop</fullName><default>false</default><label>Period_Slip_Loop</label></value>
+            <value><fullName>Category_Regression</fullName><default>false</default><label>Category_Regression</label></value>
+            <value><fullName>Coverage_Gap</fullName><default>false</default><label>Coverage_Gap</label></value>
+            <value><fullName>Staleness</fullName><default>false</default><label>Staleness</label></value>
+            <value><fullName>Deal_Push_Pattern</fullName><default>false</default><label>Deal_Push_Pattern</label></value>
+            <value><fullName>Forecast_Accuracy_Rep</fullName><default>false</default><label>Forecast_Accuracy_Rep</label></value>
+            <value><fullName>Product_Strength</fullName><default>false</default><label>Product_Strength</label></value>
+            <value><fullName>Product_Weakness</fullName><default>false</default><label>Product_Weakness</label></value>
+            <value><fullName>Deal_Velocity</fullName><default>false</default><label>Deal_Velocity</label></value>
+            <value><fullName>Win_Rate_By_Size</fullName><default>false</default><label>Win_Rate_By_Size</label></value>
+            <value><fullName>Stage_Stall</fullName><default>false</default><label>Stage_Stall</label></value>
+            <value><fullName>Quarter_End_Compression</fullName><default>false</default><label>Quarter_End_Compression</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

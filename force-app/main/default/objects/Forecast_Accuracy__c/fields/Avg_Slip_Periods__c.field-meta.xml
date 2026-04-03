@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Avg_Slip_Periods__c</fullName>
+    <description>Average number of periods deals slipped from their original forecast close</description>
+    <label>Avg Slip Periods</label>
+    <precision>3</precision>
+    <required>false</required>
+    <scale>1</scale>
+    <type>Number</type>
+</CustomField>

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Prelock_Notification_Sent__c</fullName>
+    <label>Prelock Notification Sent</label>
+    <description>Prelock Notification Sent</description>
+    <inlineHelpText>Prelock Notification Sent</inlineHelpText>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>
