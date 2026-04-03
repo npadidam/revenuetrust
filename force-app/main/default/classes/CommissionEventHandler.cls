@@ -154,10 +154,131 @@ public with sharing class CommissionEventHandler {
 
     /**
      * @description Handle deal reopened (moved from Won/Lost back to open stage).
-     *              Flag for admin review — commissions may need to be held or reversed.
+     *              Two cases:
+     *              1. Won → Reopened: commissions may exist (Validated/Paid). Flag for admin.
+     *                 If original close date is in a frozen forecast period, adjustments must
+     *                 be created in the current period (frozen entries are immutable).
+     *              2. Lost → Reopened: deal is alive again.
+     *                 - If Lost→Reopened was preceded by Won→Lost with clawback: may need
+     *                   to reverse the clawback (flag for admin).
+     *                 - If it was Open→Lost→Reopened (never closed): no commission action.
      */
     private void handleDealReopened(Id opportunityId, Commission_Event__e evt) {
-        createReprocessingAlert(opportunityId, 'DEAL_REOPENED_REVIEW_REQUIRED', evt);
+        String previousStage = evt.Previous_Value__c;
+
+        Set<String> wonStages = getWonStages();
+        Set<String> lostStages = getLostStages();
+
+        if (wonStages.contains(previousStage)) {
+            // ── Won → Reopened ──
+            // Check for existing commissions
+            List<Comp_Calculation__c> existingCalcs = [
+                SELECT Id, Calculation_Status__c, Contract_Date2__c, Adjustment_Type__c
+                FROM Comp_Calculation__c
+                WHERE Opportunity__c = :opportunityId
+                AND Adjustment_Type__c = 'Original'
+                AND Calculation_Status__c IN ('Projected', 'Validated', 'Paid')
+                LIMIT 200
+            ];
+
+            if (existingCalcs.isEmpty()) {
+                // No commissions — nothing to do
+                return;
+            }
+
+            // Check if any commissions are in a frozen period
+            Boolean hasFrozenPeriodCalcs = false;
+            Date today = Date.today();
+            List<Forecast_Period__c> frozenPeriods = [
+                SELECT Id, Start_Date__c, End_Date__c
+                FROM Forecast_Period__c
+                WHERE Status__c = 'Frozen'
+                AND End_Date__c < :today
+            ];
+
+            if (!frozenPeriods.isEmpty()) {
+                Set<Date> frozenEndDates = new Set<Date>();
+                for (Forecast_Period__c fp : frozenPeriods) {
+                    frozenEndDates.add(fp.End_Date__c);
+                }
+                for (Comp_Calculation__c calc : existingCalcs) {
+                    if (calc.Contract_Date2__c != null) {
+                        for (Forecast_Period__c fp : frozenPeriods) {
+                            if (calc.Contract_Date2__c >= fp.Start_Date__c
+                                && calc.Contract_Date2__c <= fp.End_Date__c) {
+                                hasFrozenPeriodCalcs = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (hasFrozenPeriodCalcs) break;
+                }
+            }
+
+            // Separate Projected from Validated/Paid
+            Boolean hasLockedCalcs = false;
+            for (Comp_Calculation__c calc : existingCalcs) {
+                if (calc.Calculation_Status__c == 'Validated' || calc.Calculation_Status__c == 'Paid') {
+                    hasLockedCalcs = true;
+                    break;
+                }
+            }
+
+            if (hasLockedCalcs) {
+                // Validated/Paid exist — always flag for admin.
+                // Include frozen period context so admin knows adjustment entries are needed.
+                String alertType = hasFrozenPeriodCalcs
+                    ? 'DEAL_REOPENED_FROZEN_PERIOD'
+                    : 'DEAL_REOPENED_REVIEW_REQUIRED';
+                createReprocessingAlert(opportunityId, alertType, evt);
+            } else {
+                // Only Projected — safe to delete
+                deleteProjectedCalculations(opportunityId);
+            }
+
+        } else if (lostStages.contains(previousStage)) {
+            // ── Lost → Reopened ──
+            // Check if there were any clawback entries (meaning it was Won→Lost→Reopened)
+            Integer clawbackCount = [
+                SELECT COUNT()
+                FROM Comp_Calculation__c
+                WHERE Opportunity__c = :opportunityId
+                AND Adjustment_Type__c = 'Clawback'
+                LIMIT 1
+            ];
+
+            if (clawbackCount > 0) {
+                // Was Won→Lost (clawback happened) → now Reopened
+                // The clawback may need to be reversed. Flag for admin.
+                createReprocessingAlert(opportunityId, 'CLAWBACK_REVERSAL_REVIEW', evt);
+            }
+            // If no clawbacks, it was Open→Lost→Reopened — no commission action needed.
+            // Just clean up any remaining Projected entries from the open phase.
+            deleteProjectedCalculations(opportunityId);
+        }
+    }
+
+    /**
+     * @description Load lost stages from Incentive_Configuration__c.
+     */
+    private Set<String> getLostStages() {
+        Set<String> stages = new Set<String>{ 'Closed Lost' }; // default
+        List<Incentive_Configuration__c> configs = [
+            SELECT Lost_Stages__c
+            FROM Incentive_Configuration__c
+            WHERE Is_Active__c = true
+            LIMIT 1
+        ];
+        if (!configs.isEmpty() && String.isNotBlank(configs[0].Lost_Stages__c)) {
+            stages.clear();
+            for (String s : configs[0].Lost_Stages__c.split(',')) {
+                String trimmed = s.trim();
+                if (String.isNotBlank(trimmed)) {
+                    stages.add(trimmed);
+                }
+            }
+        }
+        return stages;
     }
 
     /**
@@ -210,12 +331,22 @@ public with sharing class CommissionEventHandler {
     }
 
     private String getAlertMessage(String alertType, Id opportunityId) {
-        if (alertType == 'CLAWBACK_EVALUATION_REQUIRED') {
-            return 'Deal ' + opportunityId + ' moved to a Lost stage after commissions were processed. Clawback evaluation required.';
-        } else if (alertType == 'DEAL_REOPENED_REVIEW_REQUIRED') {
-            return 'Deal ' + opportunityId + ' was reopened after being closed. Existing commissions may need to be held or reversed. Admin review required.';
-        } else {
-            return 'Deal ' + opportunityId + ' was modified after commissions were validated/paid. Manual reprocessing required (event: ' + alertType + ').';
+        switch on alertType {
+            when 'CLAWBACK_EVALUATION_REQUIRED' {
+                return 'Deal ' + opportunityId + ' moved to a Lost stage after commissions were processed. Clawback evaluation required per Clawback_Policy__c rules.';
+            }
+            when 'DEAL_REOPENED_REVIEW_REQUIRED' {
+                return 'Deal ' + opportunityId + ' was reopened after being closed (Won → Reopened). Validated/Paid commissions exist. Admin must decide: hold, reverse, or keep.';
+            }
+            when 'DEAL_REOPENED_FROZEN_PERIOD' {
+                return 'Deal ' + opportunityId + ' was reopened after being closed, and the original commission date falls in a FROZEN forecast period. Frozen entries cannot be modified — adjustment entries must be created in the current period.';
+            }
+            when 'CLAWBACK_REVERSAL_REVIEW' {
+                return 'Deal ' + opportunityId + ' was reopened after being lost (Won → Lost → Reopened). A clawback was previously processed. Admin must review whether the clawback should be reversed.';
+            }
+            when else {
+                return 'Deal ' + opportunityId + ' was modified after commissions were validated/paid. Manual reprocessing required (event: ' + alertType + ').';
+            }
         }
     }
 
