@@ -436,17 +436,233 @@ public with sharing class CommissionEventHandler {
     }
 
     /**
-     * @description Handle REVENUE_RECOGNITION_EVENT — route to CommissionService
-     *              with rev rec flag. Stub for Phase 1C.
+     * @description Handle REVENUE_RECOGNITION_EVENT -- routes based on Change_Subtype__c:
+     *              - REV_REC_POSTED:           Process commission for Rev Rec triggered plans
+     *              - REV_REC_CORRECTED:        Reprocess or alert depending on calc status
+     *              - REV_REC_SCHEDULE_CHANGED: Invalidate/recreate future payment installments
+     *
+     *              Per Commission Event Routing Matrix V2.3 section B.4.
      */
     private void handleRevenueRecognitionEvent(Id recordId, Commission_Event__e evt) {
-        // Stub — full revenue recognition integration in Phase 1C
+        String subtype = evt.Change_Subtype__c;
+
+        // Default to REV_REC_POSTED if no subtype provided
+        if (String.isBlank(subtype)) {
+            subtype = 'REV_REC_POSTED';
+        }
+
+        switch on subtype {
+            when 'REV_REC_POSTED' {
+                handleRevRecPosted(recordId, evt);
+            }
+            when 'REV_REC_CORRECTED' {
+                handleRevRecCorrected(recordId, evt);
+            }
+            when 'REV_REC_SCHEDULE_CHANGED' {
+                handleRevRecScheduleChanged(recordId, evt);
+            }
+            when else {
+                System.debug(LoggingLevel.WARN,
+                    'handleRevenueRecognitionEvent: Unknown subtype "' + subtype +
+                    '" for Opportunity ' + recordId + '. Defaulting to REV_REC_POSTED flow.');
+                handleRevRecPosted(recordId, evt);
+            }
+        }
+    }
+
+    /**
+     * @description REV_REC_POSTED: Revenue has been recognized for the first time.
+     *              Triggers commission calculation via CommissionService for plans
+     *              with Trigger_Type__c = 'Revenue_Recognition'.
+     *
+     *              Note: CommissionService.processOpportunity currently processes all
+     *              eligible plans. Until a filtered entry point is available, we call
+     *              the standard method and log that only Rev Rec plans should apply.
+     */
+    private void handleRevRecPosted(Id opportunityId, Commission_Event__e evt) {
+        // Log that this is a Rev Rec triggered calculation
         System.debug(LoggingLevel.INFO,
-            'REVENUE_RECOGNITION_EVENT received for ' + recordId +
-            '. Routing to CommissionService with rev rec flag (stub).');
+            'REV_REC_POSTED: Processing commission for Opportunity ' + opportunityId +
+            '. Only plans with Trigger_Type__c = Revenue_Recognition should be processed.');
+
+        // Process commissions -- CommissionService will evaluate all active plans.
+        // TODO: Phase 2 -- add CommissionService.processOpportunity(Id, String triggerType)
+        //       overload to filter to Revenue_Recognition plans only.
+        CommissionService.processOpportunity(opportunityId);
+
+        // Audit trail
         IncentiveChangeEventService.logEvent(
-            'Opportunity', recordId, 'REVENUE_RECOGNITION_EVENT',
-            evt.Previous_Value__c, evt.New_Value__c, 'Revenue recognition event received');
+            'Opportunity',
+            opportunityId,
+            'REV_REC_POSTED',
+            evt.Previous_Value__c,
+            evt.New_Value__c,
+            'Revenue recognition posted. Commission calculation triggered for Rev Rec plans. ' +
+            'Note: All active plans processed until filtered entry point is available.'
+        );
+    }
+
+    /**
+     * @description REV_REC_CORRECTED: A previously recognized revenue amount was corrected.
+     *              Follows the same pattern as AMOUNT_CHANGED_POST_CLOSE:
+     *              - If only Projected calcs exist -> delete and recalculate
+     *              - If Validated/Paid calcs exist -> create admin alert for review
+     */
+    private void handleRevRecCorrected(Id opportunityId, Commission_Event__e evt) {
+        List<Comp_Calculation__c> existingCalcs = [
+            SELECT Id, Calculation_Status__c
+            FROM Comp_Calculation__c
+            WHERE Opportunity__c = :opportunityId
+              AND Calculation_Status__c IN ('Projected', 'Validated', 'Paid')
+            LIMIT 200
+        ];
+
+        if (existingCalcs.isEmpty()) {
+            // No existing calculations -- process fresh
+            CommissionService.processOpportunity(opportunityId);
+            IncentiveChangeEventService.logEvent(
+                'Opportunity', opportunityId, 'REV_REC_CORRECTED',
+                evt.Previous_Value__c, evt.New_Value__c,
+                'Revenue recognition corrected. No prior calcs found; fresh calculation triggered.'
+            );
+            return;
+        }
+
+        // Check if any calcs are Validated or Paid (locked)
+        Boolean hasLockedCalcs = false;
+        for (Comp_Calculation__c calc : existingCalcs) {
+            if (calc.Calculation_Status__c == 'Validated' || calc.Calculation_Status__c == 'Paid') {
+                hasLockedCalcs = true;
+                break;
+            }
+        }
+
+        if (hasLockedCalcs) {
+            // Validated/Paid calcs exist -- cannot auto-recalculate; alert admin
+            String alertType = hasCalcsInFrozenPeriod(opportunityId)
+                ? 'REV_REC_CORRECTED_FROZEN_PERIOD'
+                : 'REV_REC_CORRECTED_REPROCESSING';
+            createReprocessingAlert(opportunityId, alertType, evt);
+
+            IncentiveChangeEventService.logEvent(
+                'Opportunity', opportunityId, 'REV_REC_CORRECTED',
+                evt.Previous_Value__c, evt.New_Value__c,
+                'Revenue recognition corrected but Validated/Paid calcs exist. Admin alert created: ' + alertType
+            );
+        } else {
+            // Only Projected calcs -- safe to delete and recalculate
+            deleteProjectedCalculations(opportunityId);
+            CommissionService.processOpportunity(opportunityId);
+
+            IncentiveChangeEventService.logEvent(
+                'Opportunity', opportunityId, 'REV_REC_CORRECTED',
+                evt.Previous_Value__c, evt.New_Value__c,
+                'Revenue recognition corrected. Projected calcs deleted and recalculated.'
+            );
+        }
+    }
+
+    /**
+     * @description REV_REC_SCHEDULE_CHANGED: The revenue recognition schedule was modified.
+     *              Queries Payment_Schedule__c records for the opportunity's calcs:
+     *              - If future installments exist with Status = 'Scheduled' -> invalidate and recreate
+     *              - If any installments are already 'Due' or 'Paid' -> create admin alert
+     */
+    private void handleRevRecScheduleChanged(Id opportunityId, Commission_Event__e evt) {
+        // Get all active Comp_Calculation__c Ids for this opportunity
+        List<Comp_Calculation__c> calcs = [
+            SELECT Id
+            FROM Comp_Calculation__c
+            WHERE Opportunity__c = :opportunityId
+              AND Calculation_Status__c NOT IN ('Reversed', 'Cancelled')
+            LIMIT 500
+        ];
+
+        if (calcs.isEmpty()) {
+            // No calcs to adjust schedules for -- log and return
+            IncentiveChangeEventService.logEvent(
+                'Opportunity', opportunityId, 'REV_REC_SCHEDULE_CHANGED',
+                evt.Previous_Value__c, evt.New_Value__c,
+                'Revenue recognition schedule changed but no active calcs found.'
+            );
+            return;
+        }
+
+        Set<Id> calcIds = new Set<Id>();
+        for (Comp_Calculation__c calc : calcs) {
+            calcIds.add(calc.Id);
+        }
+
+        // Query Payment_Schedule__c records linked to these calculations
+        List<Payment_Schedule__c> schedules = [
+            SELECT Id, Status__c, Comp_Calculation__c, Scheduled_Date__c, Installment_Amount__c
+            FROM Payment_Schedule__c
+            WHERE Comp_Calculation__c IN :calcIds
+            ORDER BY Scheduled_Date__c ASC
+            LIMIT 1000
+        ];
+
+        if (schedules.isEmpty()) {
+            // No payment schedules exist -- log informational event
+            IncentiveChangeEventService.logEvent(
+                'Opportunity', opportunityId, 'REV_REC_SCHEDULE_CHANGED',
+                evt.Previous_Value__c, evt.New_Value__c,
+                'Revenue recognition schedule changed but no Payment_Schedule__c records found.'
+            );
+            return;
+        }
+
+        // Categorize schedules
+        List<Payment_Schedule__c> scheduledInstallments = new List<Payment_Schedule__c>();
+        Boolean hasLockedInstallments = false;
+
+        for (Payment_Schedule__c ps : schedules) {
+            if (ps.Status__c == 'Due' || ps.Status__c == 'Paid') {
+                hasLockedInstallments = true;
+            } else if (ps.Status__c == 'Scheduled') {
+                scheduledInstallments.add(ps);
+            }
+        }
+
+        if (hasLockedInstallments) {
+            // Cannot auto-modify -- create admin alert
+            String alertType = hasCalcsInFrozenPeriod(opportunityId)
+                ? 'REV_REC_SCHEDULE_CHANGED_FROZEN_PERIOD'
+                : 'REV_REC_SCHEDULE_CHANGED_LOCKED_INSTALLMENTS';
+            createReprocessingAlert(opportunityId, alertType, evt);
+
+            IncentiveChangeEventService.logEvent(
+                'Opportunity', opportunityId, 'REV_REC_SCHEDULE_CHANGED',
+                evt.Previous_Value__c, evt.New_Value__c,
+                'Revenue recognition schedule changed but Due/Paid installments exist. ' +
+                'Admin alert created: ' + alertType
+            );
+        }
+
+        // Invalidate and recreate future Scheduled installments
+        if (!scheduledInstallments.isEmpty()) {
+            // Mark existing Scheduled installments as Cancelled
+            List<Payment_Schedule__c> toCancel = new List<Payment_Schedule__c>();
+            for (Payment_Schedule__c ps : scheduledInstallments) {
+                toCancel.add(new Payment_Schedule__c(
+                    Id = ps.Id,
+                    Status__c = 'Cancelled'
+                ));
+            }
+            update toCancel;
+
+            // Trigger recalculation which will recreate payment schedules
+            // based on the updated revenue recognition schedule
+            CommissionService.processOpportunity(opportunityId);
+
+            IncentiveChangeEventService.logEvent(
+                'Opportunity', opportunityId, 'REV_REC_SCHEDULE_CHANGED',
+                evt.Previous_Value__c, evt.New_Value__c,
+                'Revenue recognition schedule changed. ' + scheduledInstallments.size() +
+                ' Scheduled installment(s) cancelled and recalculation triggered.' +
+                (hasLockedInstallments ? ' Note: Due/Paid installments require admin review.' : '')
+            );
+        }
     }
 
     // ═══════════════════════════════════════════════════════════════════════
