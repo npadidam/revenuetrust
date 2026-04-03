@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Trigger_Name__c</fullName>
+    <description>The API name of the trigger this record controls. e.g., OpportunityCommissionTrigger, CommissionEventTrigger</description>
+    <fieldManageability>DeveloperControlled</fieldManageability>
+    <label>Trigger Name</label>
+    <length>100</length>
+    <required>true</required>
+    <type>Text</type>
+    <unique>true</unique>
+</CustomField>

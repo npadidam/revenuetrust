@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Lost_Stages__c</fullName>
+    <description>Comma-separated Opportunity Stage values considered "Lost". Triggers clawback evaluation if commissions were already processed. Default: "Closed Lost".</description>
+    <inlineHelpText>Comma-separated stage names. e.g., "Closed Lost,Cancelled,Withdrawn"</inlineHelpText>
+    <label>Lost Stages</label>
+    <length>1000</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

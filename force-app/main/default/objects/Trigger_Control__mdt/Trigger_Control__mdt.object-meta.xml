@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <description>Controls enable/disable state for RevenueTrust triggers. Admins can disable triggers without deploying code. ISV best practice per §14.4.</description>
+    <label>Trigger Control</label>
+    <pluralLabel>Trigger Controls</pluralLabel>
+    <visibility>Public</visibility>
+</CustomObject>

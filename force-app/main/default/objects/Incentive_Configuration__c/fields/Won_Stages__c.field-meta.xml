@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Won_Stages__c</fullName>
+    <description>Comma-separated Opportunity Stage values that are considered "Won" for commission purposes. Orgs may have "Closed Won", "Booked", "Contract Signed", "Funded", etc. Captured during onboarding wizard. Default: "Closed Won".</description>
+    <inlineHelpText>Comma-separated stage names that trigger commission processing. e.g., "Closed Won,Booked,Contract Signed"</inlineHelpText>
+    <label>Won Stages</label>
+    <length>1000</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

@@ -6,6 +6,9 @@
 public with sharing class GovernanceEventHandler {
 
     public void handle(List<Governance_Eval_Event__e> events) {
+        if (!TriggerControlService.isEnabled('GovernanceEventTrigger')) {
+            return;
+        }
         for (Governance_Eval_Event__e evt : events) {
             try {
                 routeEvent(evt);

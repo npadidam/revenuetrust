@@ -6,6 +6,9 @@
 public with sharing class SignalEventHandler {
 
     public void handle(List<Signal_Event__e> events) {
+        if (!TriggerControlService.isEnabled('SignalEventTrigger')) {
+            return;
+        }
         for (Signal_Event__e evt : events) {
             try {
                 routeEvent(evt);
