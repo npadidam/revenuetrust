@@ -248,4 +248,88 @@ public class RevenueTrustTestDataFactory {
         result.put('Opportunity', opp.Id);
         return result;
     }
+
+    // ── Comp Calculation ────────────────────────────────────────────────
+
+    public static Comp_Calculation__c createCompCalculation(Id compPlanId, Id opportunityId, String status) {
+        Comp_Calculation__c calc = new Comp_Calculation__c(
+            Comp_Plan__c = compPlanId,
+            Opportunity__c = opportunityId,
+            Calculation_Status__c = status,
+            Eligible_Commission__c = 5000,
+            Commisionable_Value__c = 50000,
+            Applied_Percentage__c = 10,
+            Contract_Date2__c = Date.today(),
+            Hold_Status__c = 'Not_Held'
+        );
+        insert calc;
+        return calc;
+    }
+
+    public static List<Comp_Calculation__c> createCompCalculations(
+        Id compPlanId, Id opportunityId, String status, Integer count
+    ) {
+        List<Comp_Calculation__c> calcs = new List<Comp_Calculation__c>();
+        for (Integer i = 0; i < count; i++) {
+            calcs.add(new Comp_Calculation__c(
+                Comp_Plan__c = compPlanId,
+                Opportunity__c = opportunityId,
+                Calculation_Status__c = status,
+                Eligible_Commission__c = 5000,
+                Commisionable_Value__c = 50000,
+                Applied_Percentage__c = 10,
+                Contract_Date2__c = Date.today(),
+                Hold_Status__c = 'Not_Held'
+            ));
+        }
+        insert calcs;
+        return calcs;
+    }
+
+    // ── Forecast Configuration ──────────────────────────────────────────
+
+    public static Forecast_Configuration__c createForecastConfiguration() {
+        Forecast_Configuration__c fc = new Forecast_Configuration__c(
+            Name = 'Default Config',
+            Is_Active__c = true,
+            Is_Default__c = true,
+            Period_Type__c = 'Monthly',
+            Fiscal_Year_Start_Month__c = 1
+        );
+        insert fc;
+        return fc;
+    }
+
+    // ── Forecast Period ─────────────────────────────────────────────────
+
+    public static Forecast_Period__c createForecastPeriod(Id forecastConfigId, String status) {
+        Date periodStart = Date.newInstance(Date.today().year(), Date.today().month(), 1);
+        Date periodEnd = periodStart.addMonths(1).addDays(-1);
+        Forecast_Period__c fp = new Forecast_Period__c(
+            Name = 'FP-' + Date.today().month(),
+            Forecast_Configuration__c = forecastConfigId,
+            Period_Label__c = 'Q' + ((Date.today().month() - 1) / 3 + 1) + ' ' + Date.today().year(),
+            Period_Type__c = 'Monthly',
+            Start_Date__c = periodStart,
+            End_Date__c = periodEnd,
+            Status__c = status
+        );
+        insert fp;
+        return fp;
+    }
+
+    // ── Failed Event ────────────────────────────────────────────────────
+
+    public static Failed_Event__c createFailedEvent(String eventType, String payload, String status) {
+        Failed_Event__c fe = new Failed_Event__c(
+            Event_Type__c = eventType,
+            Payload__c = payload,
+            Error_Message__c = 'Test alert for ' + eventType,
+            Retry_Count__c = 0,
+            Status__c = status,
+            Original_Event_Time__c = Datetime.now()
+        );
+        insert fe;
+        return fe;
+    }
 }

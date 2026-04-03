@@ -13,6 +13,7 @@
             <value><fullName>Retrying</fullName><default>false</default><label>Retrying</label></value>
             <value><fullName>Resolved</fullName><default>false</default><label>Resolved</label></value>
             <value><fullName>Abandoned</fullName><default>false</default><label>Abandoned</label></value>
+            <value><fullName>Superseded</fullName><default>false</default><label>Superseded</label></value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

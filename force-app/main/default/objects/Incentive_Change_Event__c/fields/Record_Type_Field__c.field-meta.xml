@@ -12,6 +12,13 @@
             <value><fullName>Calculation</fullName><default>false</default><label>Calculation</label></value>
             <value><fullName>Draw</fullName><default>false</default><label>Draw</label></value>
             <value><fullName>Template</fullName><default>false</default><label>Template</label></value>
+            <value><fullName>Opportunity</fullName><default>false</default><label>Opportunity</label></value>
+            <value><fullName>Comp_Plan</fullName><default>false</default><label>Comp Plan</label></value>
+            <value><fullName>CalculationInvalidation</fullName><default>false</default><label>Calculation Invalidation</label></value>
+            <value><fullName>Commission</fullName><default>false</default><label>Commission</label></value>
+            <value><fullName>Config_Change</fullName><default>false</default><label>Config Change</label></value>
+            <value><fullName>Period</fullName><default>false</default><label>Period</label></value>
+            <value><fullName>Forecast_Period</fullName><default>false</default><label>Forecast Period</label></value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>
