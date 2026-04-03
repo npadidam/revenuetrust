@@ -121,6 +121,7 @@ public with sharing class PeriodFreezeHandler {
         List<Failed_Event__c> newAlerts = new List<Failed_Event__c>();
         List<Failed_Event__c> alertsToSupersede = new List<Failed_Event__c>();
         Integer reclassifiedCount = 0;
+        List<Id> reclassifiedAlertIds = new List<Id>();
 
         for (Id originalAlertId : alertsByOriginalId.keySet()) {
             Failed_Event__c originalAlert = alertsByOriginalId.get(originalAlertId);
@@ -171,6 +172,7 @@ public with sharing class PeriodFreezeHandler {
             alertsToSupersede.add(toSupersede);
 
             reclassifiedCount++;
+            reclassifiedAlertIds.add(originalAlertId);
         }
 
         // 6. Persist: insert new alerts, update originals to Superseded
@@ -197,6 +199,25 @@ public with sharing class PeriodFreezeHandler {
             System.debug(LoggingLevel.INFO,
                 'PeriodFreezeHandler: Reclassified ' + reclassifiedCount +
                 ' alert(s) for frozen period ' + frozenPeriod.Period_Label__c);
+        }
+
+        // Create REMEDIATION_PATH_CHANGED summary alert if any reclassifications occurred
+        if (reclassifiedCount > 0) {
+            Failed_Event__c summaryAlert = new Failed_Event__c();
+            summaryAlert.Event_Type__c = 'REMEDIATION_PATH_CHANGED_DUE_TO_PERIOD_STATUS';
+            summaryAlert.Error_Message__c = reclassifiedCount + ' unresolved commission alert(s) were reclassified ' +
+                'because forecast period "' + frozenPeriod.Period_Label__c + '" was frozen. ' +
+                'Remediation now requires adjustment entries in the current period instead of direct modifications.';
+            summaryAlert.Payload__c = JSON.serialize(new Map<String, Object>{
+                'forecastPeriodId' => forecastPeriodId,
+                'periodLabel' => frozenPeriod.Period_Label__c,
+                'reclassifiedCount' => reclassifiedCount,
+                'reclassifiedAlertIds' => reclassifiedAlertIds
+            });
+            summaryAlert.Status__c = 'Failed';
+            summaryAlert.Retry_Count__c = 0;
+            summaryAlert.Original_Event_Time__c = Datetime.now();
+            insert summaryAlert;
         }
     }
 

@@ -57,7 +57,8 @@ public with sharing class CommissionEventHandler {
 
     private void routeEvent(Commission_Event__e evt) {
         String eventType = evt.Event_Type__c;
-        Id recordId = Id.valueOf(evt.Opportunity_Id__c);
+        Id recordId = String.isNotBlank(evt.Opportunity_Id__c)
+            ? Id.valueOf(evt.Opportunity_Id__c) : null;
 
         switch on eventType {
 
@@ -134,6 +135,19 @@ public with sharing class CommissionEventHandler {
             }
             when 'CALCULATION_INVALIDATION_DETECTED' {
                 CalculationInvalidationService.handleInvalidation(eventType, recordId);
+            }
+            when 'RETRO_RECALCULATION_APPROVED' {
+                handleRetroRecalculationApproved(recordId, evt);
+            }
+            when 'BOOKING_CANCELLED' {
+                handleBookingCancellation(recordId, evt);
+            }
+            when 'BOOKING_REDUCED' {
+                handleBookingReduction(recordId, evt);
+            }
+            when 'CLAWBACK_POLICY_CHANGED' {
+                CalculationInvalidationService.handleInvalidation('CLAWBACK_POLICY_CHANGED',
+                    evt.Opportunity_Id__c != null ? Id.valueOf(evt.Opportunity_Id__c) : null);
             }
             when 'PLAN_ASSIGNMENT_CHANGED', 'RATE_TABLE_CHANGED',
                  'QUOTA_CHANGED', 'ACCELERATOR_CHANGED',
@@ -859,6 +873,47 @@ public with sharing class CommissionEventHandler {
             'Plan_Structure', recordId, eventType,
             evt.Previous_Value__c, evt.New_Value__c,
             'Plan structure change: ' + eventType);
+    }
+
+    /**
+     * @description Handle admin approval of retro-recalculation.
+     *              Parse the approval context from the event payload,
+     *              then execute the approved reprocessing scope.
+     */
+    private void handleRetroRecalculationApproved(Id recordId, Commission_Event__e evt) {
+        // The recordId here may be null or reference the Failed_Event__c that was approved
+        // Parse the payload for the actual scope
+        String payload = evt.New_Value__c;
+
+        // Log the approval
+        IncentiveChangeEventService.logEvent(
+            'Calculation', recordId, 'Reprocessing',
+            null, payload, 'Retro-recalculation approved by admin');
+
+        // The actual recalculation would be triggered by the admin UI
+        // which calls CalculationInvalidationService directly.
+        // This event exists for audit trail purposes.
+    }
+
+    /**
+     * @description Handle booking cancellation — deal was fully cancelled post-close.
+     *              Similar to DEAL_LOST but with different semantic: the deal itself
+     *              is not "lost" competitively — it's administratively cancelled.
+     *              Same financial impact: clawback evaluation required.
+     */
+    private void handleBookingCancellation(Id opportunityId, Commission_Event__e evt) {
+        // Same logic as handleDealLost — check commission history, evaluate clawback
+        handleDealLost(opportunityId, evt);
+    }
+
+    /**
+     * @description Handle booking reduction — deal amount reduced post-close.
+     *              E.g., partial cancellation, downsell, contract amendment.
+     *              Similar to AMOUNT_CHANGED_POST_CLOSE but with semantic distinction.
+     */
+    private void handleBookingReduction(Id opportunityId, Commission_Event__e evt) {
+        // Same logic as post-close amount change
+        handlePostCloseChange(opportunityId, 'BOOKING_REDUCED', evt);
     }
 
     // ═══════════════════════════════════════════════════════════════════════

@@ -184,6 +184,16 @@ public with sharing class CalculationInvalidationService {
                     return roles.isEmpty() ? null : roles[0].Plan_Template__c;
                 }
 
+                when 'CLAWBACK_POLICY_CHANGED' {
+                    List<Clawback_Policy__c> policies = [
+                        SELECT Plan_Template__c
+                        FROM Clawback_Policy__c
+                        WHERE Id = :sourceRecordId
+                        LIMIT 1
+                    ];
+                    return policies.isEmpty() ? null : policies[0].Plan_Template__c;
+                }
+
                 when 'PLAN_ASSIGNMENT_CHANGED' {
                     // sourceRecordId IS the Comp_Plan__c — query its template
                     List<Comp_Plan__c> plans = [

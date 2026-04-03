@@ -50,13 +50,19 @@ public with sharing class EventPublisherService {
         return results[0];
     }
 
-    // Config-change event types that do not require an Opportunity_Id__c
+    // Config-change and admin/booking event types that do not require an Opportunity_Id__c
     private static final Set<String> CONFIG_CHANGE_EVENT_TYPES = new Set<String>{
         'RATE_TABLE_CHANGED',
         'CAP_RULE_CHANGED',
         'PRODUCT_ELIGIBILITY_RULE_CHANGED',
         'ROLE_ELIGIBILITY_RULE_CHANGED',
-        'PERIOD_REOPENED'
+        'PERIOD_REOPENED',
+        'BOOKING_CANCELLED',
+        'BOOKING_REDUCED',
+        'RETRO_RECALCULATION_APPROVED',
+        'CLAWBACK_POLICY_CHANGED',
+        'PLAN_ASSIGNMENT_CHANGED',
+        'PLAN_TERMINATED'
     };
 
     private static void validateCommissionEvent(Commission_Event__e evt) {
