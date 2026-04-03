@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Attainment_Recompute_Scope__c</fullName>
+    <description>Controls how far attainment ripple recomputation travels. Default: Participant_Period.</description>
+    <label>Attainment Recompute Scope</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Current_Deal_Only</fullName><default>false</default><label>Current Deal Only</label></value>
+            <value><fullName>Participant_Period</fullName><default>false</default><label>Participant Period</label></value>
+            <value><fullName>Participant_Annual</fullName><default>false</default><label>Participant Annual</label></value>
+            <value><fullName>Pool_Period</fullName><default>false</default><label>Pool Period</label></value>
+            <value><fullName>Manual_Only</fullName><default>false</default><label>Manual Only</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

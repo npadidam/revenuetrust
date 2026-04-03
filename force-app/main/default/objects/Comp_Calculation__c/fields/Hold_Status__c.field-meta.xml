@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Hold_Status__c</fullName>
+    <description>Independent dimension from Calculation_Status__c. A record can be Validated + Held simultaneously. Calculation_Status does NOT change when a hold is applied.</description>
+    <label>Hold Status</label>
+    <required>false</required>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Not_Held</fullName><default>true</default><label>Not Held</label></value>
+            <value><fullName>Held</fullName><default>false</default><label>Held</label></value>
+            <value><fullName>Partially_Released</fullName><default>false</default><label>Partially Released</label></value>
+            <value><fullName>Released</fullName><default>false</default><label>Released</label></value>
+            <value><fullName>Expired</fullName><default>false</default><label>Expired</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

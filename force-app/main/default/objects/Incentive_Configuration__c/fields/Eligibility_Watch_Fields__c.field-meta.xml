@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Eligibility_Watch_Fields__c</fullName>
+    <description>Comma-separated Opportunity field API names to monitor for eligibility changes. Include value-source fields from Commissionable_Value_Map. e.g., Commission_Eligible__c,Booking_Type__c,Gross_Commissionable_Value__c</description>
+    <label>Eligibility Watch Fields</label>
+    <length>2000</length>
+    <type>LongTextArea</type>
+    <visibleLines>3</visibleLines>
+</CustomField>

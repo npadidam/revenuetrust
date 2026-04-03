@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Territory_Field__c</fullName>
+    <description>Which Opportunity field holds territory assignment. e.g., Territory2Id or Custom_Territory__c</description>
+    <label>Territory Field</label>
+    <length>100</length>
+    <type>Text</type>
+    <required>false</required>
+</CustomField>

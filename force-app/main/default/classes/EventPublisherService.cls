@@ -50,12 +50,22 @@ public with sharing class EventPublisherService {
         return results[0];
     }
 
+    // Config-change event types that do not require an Opportunity_Id__c
+    private static final Set<String> CONFIG_CHANGE_EVENT_TYPES = new Set<String>{
+        'RATE_TABLE_CHANGED',
+        'CAP_RULE_CHANGED',
+        'PRODUCT_ELIGIBILITY_RULE_CHANGED',
+        'ROLE_ELIGIBILITY_RULE_CHANGED',
+        'PERIOD_REOPENED'
+    };
+
     private static void validateCommissionEvent(Commission_Event__e evt) {
-        if (String.isBlank(evt.Opportunity_Id__c)) {
-            throw new EventPublisherException('Commission_Event__e requires Opportunity_Id__c');
-        }
         if (String.isBlank(evt.Event_Type__c)) {
             throw new EventPublisherException('Commission_Event__e requires Event_Type__c');
+        }
+        if (String.isBlank(evt.Opportunity_Id__c)
+            && !CONFIG_CHANGE_EVENT_TYPES.contains(evt.Event_Type__c)) {
+            throw new EventPublisherException('Commission_Event__e requires Opportunity_Id__c');
         }
     }
 

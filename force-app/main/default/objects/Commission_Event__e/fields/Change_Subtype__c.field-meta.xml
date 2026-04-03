@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Change_Subtype__c</fullName>
+    <description>Semantic subtype for the event. Used for product mix (LINE_ADDED, LINE_REMOVED, etc.) and rev rec (REV_REC_POSTED, etc.) events.</description>
+    <isFilteringDisabled>false</isFilteringDisabled>
+    <isNameField>false</isNameField>
+    <isSortingDisabled>false</isSortingDisabled>
+    <label>Change Subtype</label>
+    <length>50</length>
+    <type>Text</type>
+</CustomField>
