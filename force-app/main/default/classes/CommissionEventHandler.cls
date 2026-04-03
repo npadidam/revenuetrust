@@ -216,33 +216,81 @@ public with sharing class CommissionEventHandler {
      *              - Won → Lost (previous stage was a won stage): clawback evaluation
      *              - Open → Lost (never closed): delete projected commissions, no clawback
      */
+    /**
+     * @description Handle deal moved to a Lost stage.
+     *              IMPORTANT: Don't rely solely on previous stage — check commission HISTORY.
+     *              The path Won→Reopened→Lost has an Open stage as previousStage,
+     *              but Validated/Paid commissions from the original close still exist.
+     *
+     *              Decision tree:
+     *              1. Check if Validated/Paid original commissions exist (regardless of previous stage)
+     *                 → Yes: clawback evaluation (was Won at some point, commissions were earned)
+     *                        If original calcs in frozen period → clawback as adjustment in current period
+     *                 → No:  check for Projected
+     *              2. Check if Projected commissions exist
+     *                 → Yes: delete them (deal is lost, no payout)
+     *                 → No:  nothing to do
+     */
     private void handleDealLost(Id opportunityId, Commission_Event__e evt) {
-        String previousStage = evt.Previous_Value__c;
+        // Always query commission history — previous stage alone is insufficient
+        // for paths like Won→Reopened→Lost where previousStage is an open stage
+        List<Comp_Calculation__c> existingCalcs = [
+            SELECT Id, Calculation_Status__c, Adjustment_Type__c, Contract_Date2__c
+            FROM Comp_Calculation__c
+            WHERE Opportunity__c = :opportunityId
+            AND Adjustment_Type__c IN ('Original', 'Amendment')
+            AND Calculation_Status__c IN ('Projected', 'Validated', 'Paid')
+            LIMIT 200
+        ];
 
-        // Check if the deal was previously in a Won stage (evt carries old stage as Previous_Value)
-        Set<String> wonStages = getWonStages();
-        Boolean wasWon = wonStages.contains(previousStage);
+        if (existingCalcs.isEmpty()) {
+            // No commissions ever existed — nothing to do
+            return;
+        }
 
-        if (wasWon) {
-            // Won → Lost: this is a churn/cancellation. Check for Validated/Paid commissions.
-            Integer lockedCalcCount = [
-                SELECT COUNT()
-                FROM Comp_Calculation__c
-                WHERE Opportunity__c = :opportunityId
-                AND Calculation_Status__c IN ('Validated', 'Paid')
-                AND Adjustment_Type__c = 'Original'
-                LIMIT 1
-            ];
+        // Separate by status
+        Boolean hasValidatedOrPaid = false;
+        Boolean hasProjected = false;
+        Date earliestCalcDate;
 
-            if (lockedCalcCount > 0) {
-                // Validated/Paid commissions exist — clawback evaluation required
-                createReprocessingAlert(opportunityId, 'CLAWBACK_EVALUATION_REQUIRED', evt);
-            } else {
-                // Only Projected — delete them
-                deleteProjectedCalculations(opportunityId);
+        for (Comp_Calculation__c calc : existingCalcs) {
+            if (calc.Calculation_Status__c == 'Validated' || calc.Calculation_Status__c == 'Paid') {
+                hasValidatedOrPaid = true;
+                if (earliestCalcDate == null && calc.Contract_Date2__c != null) {
+                    earliestCalcDate = calc.Contract_Date2__c;
+                }
             }
-        } else {
-            // Open → Lost: deal never closed. Just clean up any projected commissions.
+            if (calc.Calculation_Status__c == 'Projected') {
+                hasProjected = true;
+            }
+        }
+
+        if (hasValidatedOrPaid) {
+            // Commissions were earned at some point (direct Won→Lost OR Won→Reopened→Lost).
+            // Clawback evaluation required.
+
+            // Check if original commissions are in a frozen period
+            Boolean inFrozenPeriod = false;
+            if (earliestCalcDate != null) {
+                Integer frozenCount = [
+                    SELECT COUNT()
+                    FROM Forecast_Period__c
+                    WHERE Status__c = 'Frozen'
+                    AND Start_Date__c <= :earliestCalcDate
+                    AND End_Date__c >= :earliestCalcDate
+                    LIMIT 1
+                ];
+                inFrozenPeriod = (frozenCount > 0);
+            }
+
+            String alertType = inFrozenPeriod
+                ? 'CLAWBACK_FROZEN_PERIOD'
+                : 'CLAWBACK_EVALUATION_REQUIRED';
+            createReprocessingAlert(opportunityId, alertType, evt);
+        }
+
+        // Always clean up Projected records — deal is lost, projections are void
+        if (hasProjected) {
             deleteProjectedCalculations(opportunityId);
         }
     }
@@ -459,6 +507,9 @@ public with sharing class CommissionEventHandler {
             }
             when 'DEAL_REOPENED_FROZEN_PERIOD' {
                 return 'Deal ' + opportunityId + ' was reopened after being closed, and the original commission date falls in a FROZEN forecast period. Frozen entries cannot be modified — adjustment entries must be created in the current period.';
+            }
+            when 'CLAWBACK_FROZEN_PERIOD' {
+                return 'Deal ' + opportunityId + ' was lost, and the original commissions are in a FROZEN forecast period. Clawback entries must be created as adjustments in the current period — frozen entries cannot be modified.';
             }
             when 'CLAWBACK_REVERSAL_REVIEW' {
                 return 'Deal ' + opportunityId + ' was reopened after being lost (Won → Lost → Reopened). A clawback was previously processed. Admin must review whether the clawback should be reversed.';
