@@ -93,22 +93,63 @@ public with sharing class CommissionEventHandler {
 
     /**
      * @description Handle deal moved to a Lost stage.
-     *              If commissions were already calculated, trigger clawback evaluation.
+     *              Action depends on WHERE it came from:
+     *              - Won → Lost (previous stage was a won stage): clawback evaluation
+     *              - Open → Lost (never closed): delete projected commissions, no clawback
      */
     private void handleDealLost(Id opportunityId, Commission_Event__e evt) {
-        Integer existingCalcCount = [
-            SELECT COUNT()
-            FROM Comp_Calculation__c
-            WHERE Opportunity__c = :opportunityId
-            AND Calculation_Status__c IN ('Projected', 'Validated', 'Paid')
-            AND Adjustment_Type__c = 'Original'
+        String previousStage = evt.Previous_Value__c;
+
+        // Check if the deal was previously in a Won stage (evt carries old stage as Previous_Value)
+        Set<String> wonStages = getWonStages();
+        Boolean wasWon = wonStages.contains(previousStage);
+
+        if (wasWon) {
+            // Won → Lost: this is a churn/cancellation. Check for Validated/Paid commissions.
+            Integer lockedCalcCount = [
+                SELECT COUNT()
+                FROM Comp_Calculation__c
+                WHERE Opportunity__c = :opportunityId
+                AND Calculation_Status__c IN ('Validated', 'Paid')
+                AND Adjustment_Type__c = 'Original'
+                LIMIT 1
+            ];
+
+            if (lockedCalcCount > 0) {
+                // Validated/Paid commissions exist — clawback evaluation required
+                createReprocessingAlert(opportunityId, 'CLAWBACK_EVALUATION_REQUIRED', evt);
+            } else {
+                // Only Projected — delete them
+                deleteProjectedCalculations(opportunityId);
+            }
+        } else {
+            // Open → Lost: deal never closed. Just clean up any projected commissions.
+            deleteProjectedCalculations(opportunityId);
+        }
+    }
+
+    /**
+     * @description Load won stages from Incentive_Configuration__c.
+     *              Mirrors the logic in OpportunityCommissionTriggerHandler.
+     */
+    private Set<String> getWonStages() {
+        Set<String> stages = new Set<String>{ 'Closed Won' }; // default
+        List<Incentive_Configuration__c> configs = [
+            SELECT Won_Stages__c
+            FROM Incentive_Configuration__c
+            WHERE Is_Active__c = true
             LIMIT 1
         ];
-
-        if (existingCalcCount > 0) {
-            // Commissions exist for this deal — flag for clawback evaluation
-            createReprocessingAlert(opportunityId, 'CLAWBACK_EVALUATION_REQUIRED', evt);
+        if (!configs.isEmpty() && String.isNotBlank(configs[0].Won_Stages__c)) {
+            stages.clear();
+            for (String s : configs[0].Won_Stages__c.split(',')) {
+                String trimmed = s.trim();
+                if (String.isNotBlank(trimmed)) {
+                    stages.add(trimmed);
+                }
+            }
         }
+        return stages;
     }
 
     /**
