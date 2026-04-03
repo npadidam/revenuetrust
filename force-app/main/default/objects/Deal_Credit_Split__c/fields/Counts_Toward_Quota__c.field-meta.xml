@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Counts_Toward_Quota__c</fullName>
+    <description>If true, this split's value credits toward the participant's quota attainment. If false, commission is paid but quota is not affected (e.g., overlay credit).</description>
+    <label>Counts Toward Quota</label>
+    <type>Checkbox</type>
+    <defaultValue>true</defaultValue>
+</CustomField>

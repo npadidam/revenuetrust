@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Split_Percentage__c</fullName>
+    <description>Percentage of the deal's commissionable value allocated to this participant. All splits on a deal should sum to 100% (validated by trigger).</description>
+    <label>Split Percentage</label>
+    <type>Percent</type>
+    <precision>5</precision>
+    <scale>2</scale>
+    <required>false</required>
+</CustomField>

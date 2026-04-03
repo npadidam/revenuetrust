@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <deploymentStatus>Deployed</deploymentStatus>
+    <description>RevenueTrust-owned credit split for a deal. Independent of Salesforce OpportunitySplit — works in any org regardless of Team Selling feature. Allows comp admins, deal owners, and managers to allocate commission credit across multiple participants with role-specific splits, approval workflow, and audit trail. Each record = one participant's credit allocation on one deal.</description>
+    <enableActivities>false</enableActivities>
+    <enableBulkApi>true</enableBulkApi>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <enableSharing>true</enableSharing>
+    <enableStreamingApi>true</enableStreamingApi>
+    <label>Deal Credit Split</label>
+    <nameField>
+        <displayFormat>DCS-{000000}</displayFormat>
+        <label>Split ID</label>
+        <type>AutoNumber</type>
+    </nameField>
+    <pluralLabel>Deal Credit Splits</pluralLabel>
+    <sharingModel>ReadWrite</sharingModel>
+</CustomObject>

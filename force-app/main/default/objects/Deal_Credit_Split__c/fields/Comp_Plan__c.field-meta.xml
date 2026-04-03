@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Comp_Plan__c</fullName>
+    <description>The specific plan assignment this credit applies to. Determines rate structure.</description>
+    <label>Comp Plan</label>
+    <type>Lookup</type>
+    <referenceTo>Comp_Plan__c</referenceTo>
+    <relationshipLabel>Credit Splits</relationshipLabel>
+    <relationshipName>Credit_Splits_Plan</relationshipName>
+    <deleteConstraint>SetNull</deleteConstraint>
+    <required>false</required>
+</CustomField>

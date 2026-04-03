@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Is_Primary__c</fullName>
+    <description>True if this is the primary credit holder (typically the deal owner). Only one per deal should be primary.</description>
+    <label>Is Primary</label>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

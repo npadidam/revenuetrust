@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>External_Split_Id__c</fullName>
+    <description>If synced from OpportunitySplit or external system, the source record ID.</description>
+    <externalId>true</externalId>
+    <label>External Split Id</label>
+    <type>Text</type>
+    <length>100</length>
+    <required>false</required>
+    <unique>true</unique>
+</CustomField>

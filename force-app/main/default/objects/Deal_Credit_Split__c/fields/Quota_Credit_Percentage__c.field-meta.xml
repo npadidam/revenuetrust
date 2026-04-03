@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Quota_Credit_Percentage__c</fullName>
+    <description>If different from Split_Percentage — what % of the deal credits toward quota. Null = same as split %. Enables split where commission is on 50% but quota credits 100%.</description>
+    <label>Quota Credit Percentage</label>
+    <type>Percent</type>
+    <precision>5</precision>
+    <scale>2</scale>
+    <required>false</required>
+</CustomField>
