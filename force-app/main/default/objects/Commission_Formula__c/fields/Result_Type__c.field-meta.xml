@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Result_Type__c</fullName>
+    <description>What the formula produces: a flat commission amount, a commission rate, or a commissionable value to apply a rate against.</description>
+    <externalId>false</externalId>
+    <label>Result Type</label>
+    <required>true</required>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Commission_Amount</fullName>
+                <default>false</default>
+                <label>Commission Amount</label>
+            </value>
+            <value>
+                <fullName>Commission_Rate</fullName>
+                <default>false</default>
+                <label>Commission Rate</label>
+            </value>
+            <value>
+                <fullName>Commissionable_Value</fullName>
+                <default>false</default>
+                <label>Commissionable Value</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Plan_Template__c</fullName>
+    <description>Master-detail relationship to the parent Incentive Plan Template.</description>
+    <externalId>false</externalId>
+    <label>Plan Template</label>
+    <referenceTo>Incentive_Plan_Template__c</referenceTo>
+    <relationshipLabel>Custom Formulas</relationshipLabel>
+    <relationshipName>Custom_Formulas</relationshipName>
+    <relationshipOrder>0</relationshipOrder>
+    <reparentableMasterDetail>false</reparentableMasterDetail>
+    <trackHistory>false</trackHistory>
+    <type>MasterDetail</type>
+    <writeRequiresMasterRead>false</writeRequiresMasterRead>
+</CustomField>

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Error_Handling__c</fullName>
+    <description>How to handle formula evaluation errors. Use_Fallback applies the Fallback Rate, Skip ignores the formula, Alert_Admin sends a notification.</description>
+    <externalId>false</externalId>
+    <label>Error Handling</label>
+    <required>false</required>
+    <trackHistory>false</trackHistory>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value>
+                <fullName>Use_Fallback</fullName>
+                <default>true</default>
+                <label>Use Fallback</label>
+            </value>
+            <value>
+                <fullName>Skip</fullName>
+                <default>false</default>
+                <label>Skip</label>
+            </value>
+            <value>
+                <fullName>Alert_Admin</fullName>
+                <default>false</default>
+                <label>Alert Admin</label>
+            </value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

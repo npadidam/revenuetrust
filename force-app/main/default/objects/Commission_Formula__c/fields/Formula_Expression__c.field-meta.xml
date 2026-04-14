@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Formula_Expression__c</fullName>
+    <description>The formula expression in a safe expression language. Supports arithmetic, comparisons, IF/THEN/ELSE, and functions (MIN, MAX, ABS, ROUND). Example: (Amount - COGS__c) * 0.05 * IF(Term_Months__c > 12, 1.1, 1.0)</description>
+    <externalId>false</externalId>
+    <label>Formula Expression</label>
+    <length>5000</length>
+    <trackHistory>false</trackHistory>
+    <type>LongTextArea</type>
+    <visibleLines>6</visibleLines>
+</CustomField>

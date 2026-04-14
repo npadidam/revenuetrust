@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Test_Input__c</fullName>
+    <description>JSON test data for formula validation. Admins can test formulas before activating them by providing sample variable values.</description>
+    <externalId>false</externalId>
+    <label>Test Input</label>
+    <length>2000</length>
+    <trackHistory>false</trackHistory>
+    <type>LongTextArea</type>
+    <visibleLines>4</visibleLines>
+</CustomField>

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Fallback_Rate__c</fullName>
+    <description>If formula evaluation fails, use this rate as a fallback. Only applies when Error Handling is set to Use_Fallback.</description>
+    <externalId>false</externalId>
+    <label>Fallback Rate</label>
+    <precision>7</precision>
+    <required>false</required>
+    <scale>2</scale>
+    <trackHistory>false</trackHistory>
+    <type>Percent</type>
+</CustomField>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Variables__c</fullName>
+    <description>JSON array defining the variables used in the formula. Each entry specifies name, source field, and type. Example: [{"name": "Amount", "source": "Pipeline.Amount", "type": "currency"}]</description>
+    <externalId>false</externalId>
+    <label>Variables</label>
+    <length>2000</length>
+    <trackHistory>false</trackHistory>
+    <type>LongTextArea</type>
+    <visibleLines>6</visibleLines>
+</CustomField>
