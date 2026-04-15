@@ -1,0 +1,73 @@
+<template>
+  <template if:true={isOpen}>
+    <section
+      role="dialog"
+      tabindex="-1"
+      aria-labelledby="dialog-heading"
+      aria-modal="true"
+      aria-describedby="dialog-content"
+      class="slds-modal slds-fade-in-open"
+    >
+      <div class="slds-modal__container">
+        <header class="slds-modal__header">
+          <lightning-button-icon
+            icon-name="utility:close"
+            alternative-text="Close"
+            variant="bare-inverse"
+            class="slds-modal__close"
+            onclick={handleCancel}
+          ></lightning-button-icon>
+          <h2 id="dialog-heading" class="slds-modal__title slds-hyphenate">
+            {title}
+          </h2>
+        </header>
+        <div
+          class="slds-modal__content slds-p-around_medium"
+          id="dialog-content"
+        >
+          <p>{message}</p>
+          <template lwc:if={showPartialFullChoice}>
+            <div class="slds-m-top_medium">
+              <lightning-radio-group
+                name="saveScope"
+                label="Save scope"
+                options={scopeOptions}
+                value={selectedScope}
+                type="radio"
+                onchange={handleScopeChange}
+              ></lightning-radio-group>
+            </div>
+          </template>
+          <template lwc:if={isFreeze}>
+            <div
+              class="slds-m-top_medium slds-box slds-box_xx-small slds-theme_warning"
+            >
+              <p class="slds-text-color_error slds-text-body_small">
+                <lightning-icon
+                  icon-name="utility:warning"
+                  size="xx-small"
+                  alternative-text="Warning"
+                  class="slds-m-right_xx-small"
+                ></lightning-icon>
+                This action cannot be undone without admin intervention.
+              </p>
+            </div>
+          </template>
+        </div>
+        <footer class="slds-modal__footer">
+          <lightning-button
+            label="Cancel"
+            onclick={handleCancel}
+            class="slds-m-right_x-small"
+          ></lightning-button>
+          <lightning-button
+            label={confirmLabel}
+            variant={confirmVariant}
+            onclick={handleConfirm}
+          ></lightning-button>
+        </footer>
+      </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open"></div>
+  </template>
+</template>

@@ -1,0 +1,45 @@
+<template>
+  <div class="totals-row slds-grid">
+    <div class="gcol col-expand"></div>
+    <div class="gcol col-name totals-label">Totals ({recordCount} records)</div>
+    <div class="gcol col-owner"></div>
+    <div class="gcol col-stage"></div>
+    <div class="gcol col-date"></div>
+    <div class="gcol col-amount"></div>
+    <template lwc:if={showHealthBadge}
+      ><div class="gcol col-health"></div
+    ></template>
+    <!-- Dynamic metric totals -->
+    <template for:each={metricTotals} for:item="mt">
+      <div key={mt.key} class="gcol col-metric metric-total">
+        <lightning-formatted-number
+          value={mt.value}
+          format-style="currency"
+          currency-code="USD"
+          minimum-fraction-digits="0"
+          maximum-fraction-digits="0"
+        >
+        </lightning-formatted-number>
+      </div>
+    </template>
+    <!-- Category totals summary -->
+    <div class="gcol col-category category-totals">
+      <template for:each={categoryTotalsList} for:item="ct">
+        <div key={ct.name} class="category-total-line">
+          <c-revt-category-pill
+            label={ct.name}
+            color={ct.color}
+          ></c-revt-category-pill>
+          <span class="slds-m-left_xx-small ct-count">{ct.count}</span>
+        </div>
+      </template>
+    </div>
+    <div class="gcol col-override-date"></div>
+    <div class="gcol col-status"></div>
+    <div class="gcol col-flags"></div>
+    <div class="gcol col-divergence"></div>
+    <template lwc:if={showInlineEstimator}
+      ><div class="gcol col-estimator"></div
+    ></template>
+  </div>
+</template>

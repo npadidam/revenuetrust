@@ -1,0 +1,89 @@
+:host {
+  display: block;
+}
+
+.totals-row {
+  background-color: #f8f8f8;
+  border-top: 2px solid #dddbda;
+  border-bottom: 1px solid #dddbda;
+  padding: 8px 0;
+  font-weight: 700;
+  font-size: 0.8rem;
+  align-items: flex-start;
+}
+
+.totals-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: #706e6b;
+}
+
+.gcol {
+  padding: 2px 8px;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.col-expand {
+  width: 32px;
+}
+.col-name {
+  width: 200px;
+}
+.col-owner {
+  width: 120px;
+}
+.col-stage {
+  width: 100px;
+}
+.col-date {
+  width: 100px;
+}
+.col-amount {
+  width: 100px;
+}
+.col-health {
+  width: 48px;
+}
+.col-metric {
+  width: 110px;
+  text-align: right;
+}
+.col-category {
+  width: 130px;
+}
+.col-override-date {
+  width: 110px;
+}
+.col-status {
+  width: 80px;
+}
+.col-flags {
+  width: 32px;
+}
+.col-divergence {
+  width: 32px;
+}
+.col-estimator {
+  width: 160px;
+}
+
+.metric-total {
+  color: #080707;
+}
+
+.category-totals {
+  min-width: 130px;
+}
+
+.category-total-line {
+  display: flex;
+  align-items: center;
+  margin-bottom: 2px;
+  font-size: 0.7rem;
+}
+
+.ct-count {
+  font-weight: 600;
+  font-size: 0.7rem;
+}

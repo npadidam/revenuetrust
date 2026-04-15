@@ -1,0 +1,40 @@
+/* RevenueTrust Design Tokens — §9 */
+:host {
+  --revt-health-green: #04844b;
+  --revt-health-yellow: #f2cf00;
+  --revt-health-red: #ea001e;
+}
+
+.health-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.band-green {
+  background-color: #e8f5e9;
+  color: var(--revt-health-green, #04844b);
+}
+
+.band-yellow {
+  background-color: #fff8e1;
+  color: #8c6d1f;
+}
+
+.band-red {
+  background-color: #fbe9e7;
+  color: var(--revt-health-red, #ea001e);
+}
+
+.band-none {
+  background-color: #f3f3f3;
+  color: #706e6b;
+}
+
+.score-text {
+  margin-left: 2px;
+}

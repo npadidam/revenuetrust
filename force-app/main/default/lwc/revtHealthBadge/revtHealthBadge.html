@@ -1,0 +1,13 @@
+<template>
+  <span class={badgeClass} title={badgeTitle}>
+    <lightning-icon
+      icon-name={iconName}
+      size="xx-small"
+      alternative-text={badgeTitle}
+      class="slds-m-right_xx-small"
+    ></lightning-icon>
+    <template lwc:if={showScore}>
+      <span class="score-text">{healthScore}</span>
+    </template>
+  </span>
+</template>

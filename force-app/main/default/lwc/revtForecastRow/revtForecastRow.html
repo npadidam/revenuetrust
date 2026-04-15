@@ -1,0 +1,268 @@
+<template>
+  <!-- Main data row -->
+  <div class={rowClass} data-row-id={record.recordId}>
+    <!-- Expand toggle -->
+    <div class="gcol col-expand">
+      <button
+        class="slds-button slds-button_icon expand-toggle"
+        title="Expand"
+        onclick={handleToggleExpand}
+        aria-expanded={isExpanded}
+      >
+        <lightning-icon
+          icon-name={expandIcon}
+          size="xx-small"
+          alternative-text="Toggle details"
+        ></lightning-icon>
+      </button>
+    </div>
+
+    <!-- Deal Name -->
+    <div class="gcol col-name">
+      <a href={recordUrl} target="_blank" title={record.recordName}>
+        <span class="slds-truncate">{record.recordName}</span>
+      </a>
+    </div>
+
+    <!-- Owner -->
+    <div class="gcol col-owner">
+      <button
+        class="slds-button slds-button_reset owner-link"
+        onclick={handleOwnerClick}
+        title={record.ownerName}
+        aria-label={ownerAriaLabel}
+      >
+        <span class="slds-truncate">{record.ownerName}</span>
+      </button>
+    </div>
+
+    <!-- Stage -->
+    <div class="gcol col-stage">
+      <span class="slds-truncate">{record.stage}</span>
+    </div>
+
+    <!-- Close Date -->
+    <div class="gcol col-date">
+      <lightning-formatted-date-time
+        value={record.closeDate}
+        year="numeric"
+        month="short"
+        day="2-digit"
+      ></lightning-formatted-date-time>
+    </div>
+
+    <!-- CRM Amount -->
+    <div class="gcol col-amount">
+      <lightning-formatted-number
+        value={record.crmAmount}
+        format-style="currency"
+        currency-code="USD"
+        minimum-fraction-digits="0"
+        maximum-fraction-digits="0"
+      >
+      </lightning-formatted-number>
+    </div>
+
+    <!-- Health Badge -->
+    <template lwc:if={showHealthBadge}>
+      <div class="gcol col-health">
+        <c-revt-health-badge
+          health-score={record.healthScore}
+          health-band={record.healthBand}
+        >
+        </c-revt-health-badge>
+      </div>
+    </template>
+
+    <!-- Dynamic metric columns (editable) -->
+    <template for:each={editableMetrics} for:item="metric">
+      <div key={metric.key} class="gcol col-metric" data-column-id={metric.key}>
+        <div class="metric-cell">
+          <template lwc:if={isEditable}>
+            <lightning-input
+              type="number"
+              value={metric.value}
+              data-metric-key={metric.key}
+              variant="label-hidden"
+              step="1"
+              onchange={handleMetricChange}
+              disabled={isDisabled}
+              class="metric-input"
+            ></lightning-input>
+          </template>
+          <template lwc:else>
+            <lightning-formatted-number
+              value={metric.value}
+              format-style={metric.formatStyle}
+              currency-code="USD"
+              minimum-fraction-digits="0"
+              maximum-fraction-digits="0"
+            >
+            </lightning-formatted-number>
+          </template>
+          <template lwc:if={metric.trend}>
+            <c-revt-trend-arrow trend={metric.trend}></c-revt-trend-arrow>
+          </template>
+        </div>
+        <template lwc:if={metric.prevValue}>
+          <div class="prev-level-value">
+            <abbr class="prev-label" title={prevLevelInfoTooltip}
+              >{prevLevelLabel}</abbr
+            >
+            <lightning-formatted-number
+              value={metric.prevValue}
+              format-style="decimal"
+              minimum-fraction-digits="0"
+              maximum-fraction-digits="0"
+            >
+            </lightning-formatted-number>
+          </div>
+        </template>
+      </div>
+    </template>
+
+    <!-- Category (editable combobox) -->
+    <div class="gcol col-category" data-column-id="category">
+      <template lwc:if={isEditable}>
+        <lightning-combobox
+          value={record.category}
+          options={categoryOptions}
+          variant="label-hidden"
+          onchange={handleCategoryChange}
+          disabled={isDisabled}
+          class="category-combo"
+        ></lightning-combobox>
+      </template>
+      <template lwc:else>
+        <c-revt-category-pill
+          label={record.category}
+          color={categoryColor}
+          is-terminal={isCategoryTerminal}
+        >
+        </c-revt-category-pill>
+      </template>
+      <template lwc:if={prevLevelCategory}>
+        <div class="prev-level-value">
+          <abbr class="prev-label" title={prevLevelInfoTooltip}
+            >{prevLevelLabel}</abbr
+          >
+          {prevLevelCategory}
+        </div>
+      </template>
+    </div>
+
+    <!-- Close Date Override (editable) -->
+    <div class="gcol col-override-date" data-column-id="closeDateOverride">
+      <template lwc:if={isEditable}>
+        <lightning-input
+          type="date"
+          value={record.closeDateOverride}
+          variant="label-hidden"
+          onchange={handleCloseDateChange}
+          disabled={isDisabled}
+          class="date-input"
+        ></lightning-input>
+      </template>
+      <template lwc:else>
+        <template lwc:if={record.closeDateOverride}>
+          <lightning-formatted-date-time
+            value={record.closeDateOverride}
+            year="numeric"
+            month="short"
+            day="2-digit"
+          >
+          </lightning-formatted-date-time>
+        </template>
+      </template>
+    </div>
+
+    <!-- Status -->
+    <div class="gcol col-status">
+      <span class={statusBadgeClass}>{displayStatus}</span>
+    </div>
+
+    <!-- Flags (governance) -->
+    <div class="gcol col-flags">
+      <template lwc:if={hasGovernanceFlags}>
+        <lightning-icon
+          icon-name="utility:warning"
+          size="xx-small"
+          alternative-text="Governance flags"
+          title={governanceFlagTooltip}
+          class="flag-icon"
+        ></lightning-icon>
+      </template>
+    </div>
+
+    <!-- Divergence -->
+    <div class="gcol col-divergence">
+      <template lwc:if={record.crmDivergence}>
+        <lightning-icon
+          icon-name="utility:error"
+          size="xx-small"
+          alternative-text="CRM divergence"
+          title={record.crmDivergenceDetails}
+          class="divergence-icon"
+        ></lightning-icon>
+      </template>
+    </div>
+
+    <!-- Inline estimator -->
+    <template lwc:if={showInlineEstimator}>
+      <div class="gcol col-estimator">
+        <c-revt-inline-estimator
+          payout-estimate={record.payoutEstimate}
+          incentive-rate={record.incentiveRate}
+          threshold-proximity={record.thresholdProximity}
+          tier-impact={record.tierImpact}
+        >
+        </c-revt-inline-estimator>
+      </div>
+    </template>
+  </div>
+
+  <!-- Expandable detail row -->
+  <template lwc:if={isExpanded}>
+    <div class="detail-row slds-p-around_small" data-row-id={record.recordId}>
+      <div class="slds-grid slds-gutters_x-small detail-content">
+        <!-- Comment thread -->
+        <div class="slds-col slds-size_1-of-2">
+          <c-revt-forecast-comment-thread
+            record-id={record.recordId}
+            override-id={record.overrideId}
+            period-id={periodId}
+            read-only={isDisabled}
+          >
+          </c-revt-forecast-comment-thread>
+        </div>
+        <!-- Additional details -->
+        <div class="slds-col slds-size_1-of-2">
+          <template lwc:if={hasPreviousLevelValues}>
+            <div class="detail-section">
+              <h4 class="slds-text-heading_x-small">Previous Level</h4>
+              <template for:each={previousLevelDisplay} for:item="pv">
+                <div key={pv.key} class="slds-text-body_small">
+                  {pv.label}:
+                  <lightning-formatted-number
+                    value={pv.value}
+                    format-style="currency"
+                    currency-code="USD"
+                    minimum-fraction-digits="0"
+                  ></lightning-formatted-number>
+                </div>
+              </template>
+            </div>
+          </template>
+          <template lwc:if={record.metricValuesPreDedup}>
+            <div class="detail-section slds-m-top_x-small">
+              <h4 class="slds-text-heading_x-small">Deal Share Adjustment</h4>
+              <p class="slds-text-body_small slds-text-color_weak">
+                Values adjusted for multi-scope deal contribution.
+              </p>
+            </div>
+          </template>
+        </div>
+      </div>
+    </div>
+  </template>
+</template>

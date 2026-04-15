@@ -1,0 +1,64 @@
+.filter-bar {
+  background-color: #f3f3f3;
+  border-radius: 4px;
+  align-items: flex-end;
+  padding: 4px 8px;
+}
+
+.search-container {
+  position: relative;
+}
+
+.suggestion-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 8px;
+  right: 8px;
+  background: white;
+  border: 1px solid #dddbda;
+  border-radius: 0 0 4px 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.suggestion-item {
+  cursor: pointer;
+  font-size: 0.8rem;
+  border-bottom: 1px solid #f3f3f3;
+  display: flex;
+  align-items: center;
+}
+
+.suggestion-item:hover {
+  background-color: #f3f3f3;
+}
+
+.sug-name {
+  font-weight: 600;
+}
+
+.sug-owner {
+  font-size: 0.7rem;
+}
+
+.toggle-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.filter-check {
+  font-size: 0.75rem;
+}
+
+.clear-btn {
+  margin-top: 16px;
+}
+
+.budget-badge {
+  background-color: #0176d3;
+  color: white;
+  font-weight: 600;
+}

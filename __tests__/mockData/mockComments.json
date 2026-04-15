@@ -1,0 +1,26 @@
+[
+  {
+    "commentId": "a07000000000001",
+    "author": "Jane Smith",
+    "level": 2,
+    "commentDate": "2026-04-12T14:30:00.000Z",
+    "comment": "Customer confirmed verbal commitment. Contract expected by end of week.",
+    "commentType": "Note"
+  },
+  {
+    "commentId": "a07000000000002",
+    "author": "Bob Jones",
+    "level": 1,
+    "commentDate": "2026-04-10T09:15:00.000Z",
+    "comment": "Pushed close date to April 20 per customer request. Legal review in progress.",
+    "commentType": "Note"
+  },
+  {
+    "commentId": "a07000000000003",
+    "author": "Alice Chen",
+    "level": 3,
+    "commentDate": "2026-04-08T16:00:00.000Z",
+    "comment": "Need executive alignment before this can move to Commit. Scheduling VP call.",
+    "commentType": "Escalation"
+  }
+]

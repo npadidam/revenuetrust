@@ -1,0 +1,62 @@
+/* RevenueTrust Design Tokens — §9 */
+:host {
+  --revt-status-new: #b0b0b0;
+  --revt-status-saved: #1589ee;
+  --revt-status-submitted: #04844b;
+  --revt-status-frozen: #7b64ff;
+  --revt-status-dirty: #f2cf00;
+  --revt-trend-flat: #706e6b;
+}
+
+.metric-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.trend-inline {
+  margin-bottom: 8px;
+}
+
+.crm-values {
+  background-color: #fafaf9;
+  font-size: 0.8rem;
+}
+
+.crm-label {
+  color: var(--revt-trend-flat, #706e6b);
+  font-weight: 600;
+  margin-right: 4px;
+}
+
+.footer-section {
+  border-top: 1px solid #e5e5e5;
+  padding-top: 8px;
+}
+
+.status-badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.status-new {
+  background-color: #f3f3f3;
+  color: var(--revt-status-new, #b0b0b0);
+}
+.status-saved {
+  background-color: #eef4ff;
+  color: var(--revt-status-saved, #1589ee);
+}
+.status-submitted {
+  background-color: #e8f5e9;
+  color: var(--revt-status-submitted, #04844b);
+}
+.status-frozen {
+  background-color: #ede7f6;
+  color: var(--revt-status-frozen, #7b64ff);
+}
+.status-edited {
+  background-color: #fff8e1;
+  color: var(--revt-status-dirty, #f2cf00);
+}

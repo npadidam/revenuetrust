@@ -1,0 +1,158 @@
+<template>
+  <div class="summary-panel">
+    <div class="slds-grid slds-wrap slds-gutters_small">
+      <!-- Attainment Ring -->
+      <template lwc:if={showAttainment}>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <h3 class="slds-text-heading_x-small slds-m-bottom_x-small">
+            Attainment
+          </h3>
+          <div class="ring-container">
+            <svg
+              viewBox="0 0 120 120"
+              class="attainment-ring"
+              aria-label={attainmentLabel}
+            >
+              <!-- Background circle -->
+              <circle
+                cx="60"
+                cy="60"
+                r="50"
+                fill="none"
+                stroke="#e5e5e5"
+                stroke-width="10"
+              ></circle>
+              <!-- Progress arc -->
+              <circle
+                cx="60"
+                cy="60"
+                r="50"
+                fill="none"
+                stroke={ringColor}
+                stroke-width="10"
+                stroke-dasharray={ringDashArray}
+                stroke-dashoffset={ringDashOffset}
+                stroke-linecap="round"
+                transform="rotate(-90 60 60)"
+              ></circle>
+              <!-- Center text -->
+              <text
+                x="60"
+                y="55"
+                text-anchor="middle"
+                class="ring-pct"
+                fill={ringColor}
+              >
+                {attainmentPctDisplay}
+              </text>
+              <text
+                x="60"
+                y="72"
+                text-anchor="middle"
+                class="ring-label"
+                fill="#706e6b"
+              >
+                {attainmentBandLabel}
+              </text>
+            </svg>
+          </div>
+          <div class="slds-text-body_small slds-m-top_xx-small">
+            <div class="metric-line">
+              <span class="metric-label">Target:</span>
+              <span class="metric-value">{formattedTarget}</span>
+            </div>
+            <div class="metric-line">
+              <span class="metric-label">Achieved:</span>
+              <span class="metric-value">{formattedAchieved}</span>
+            </div>
+            <div class="metric-line">
+              <span class="metric-label">Remaining:</span>
+              <span class="metric-value">{formattedRemaining}</span>
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Category Totals -->
+      <div class={categoryColumnClass}>
+        <h3
+          class="slds-text-title_caps slds-m-bottom_xx-small"
+          style="font-size: 0.65rem"
+        >
+          Category Totals
+        </h3>
+        <table
+          class="slds-table slds-table_bordered slds-table_cell-buffer category-table"
+        >
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th class="slds-text-align_right">Amount</th>
+              <th class="slds-text-align_right">Count</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template for:each={categoryRows} for:item="cr">
+              <tr key={cr.name}>
+                <td>
+                  <c-revt-category-pill
+                    label={cr.label}
+                    color={cr.color}
+                  ></c-revt-category-pill>
+                </td>
+                <td class="slds-text-align_right">
+                  <lightning-formatted-number
+                    value={cr.total}
+                    format-style="currency"
+                    currency-code="USD"
+                    minimum-fraction-digits="0"
+                  ></lightning-formatted-number>
+                </td>
+                <td class="slds-text-align_right">{cr.count}</td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+
+        <!-- Coverage Ratio -->
+        <div class="slds-m-top_small coverage-section">
+          <div class="metric-line">
+            <span class="metric-label">{coverageLabel}:</span>
+            <span class={coverageClass}>{formattedCoverage}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tier Info (if Incentives active) -->
+      <template lwc:if={showTierInfo}>
+        <div class="slds-col slds-size_1-of-1 slds-m-top_small tier-section">
+          <h3 class="slds-text-heading_x-small slds-m-bottom_x-small">
+            Commission Tier
+          </h3>
+          <div class="slds-grid slds-gutters_xx-small">
+            <div class="slds-col">
+              <div class="metric-line">
+                <span class="metric-label">Current:</span>
+                <span class="metric-value"
+                  >{summary.currentTier} @ {formattedCurrentRate}</span
+                >
+              </div>
+            </div>
+            <template lwc:if={summary.nextTierName}>
+              <div class="slds-col">
+                <div class="metric-line">
+                  <span class="metric-label">Next:</span>
+                  <span class="metric-value">{summary.nextTierName}</span>
+                </div>
+                <div class="metric-line">
+                  <span class="metric-label">Distance:</span>
+                  <span class="metric-value">{formattedNextTierDistance}</span>
+                </div>
+              </div>
+            </template>
+          </div>
+        </div>
+      </template>
+    </div>
+  </div>
+</template>

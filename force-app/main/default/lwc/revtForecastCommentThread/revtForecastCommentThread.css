@@ -1,0 +1,35 @@
+.comment-thread {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.comment-list {
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.comment-header {
+  display: flex;
+  align-items: center;
+  font-size: 0.75rem;
+}
+
+.comment-author {
+  font-weight: 600;
+  color: #0176d3;
+}
+
+.comment-date {
+  color: #706e6b;
+  font-size: 0.7rem;
+}
+
+.comment-body {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  white-space: pre-wrap;
+}
+
+.type-picker {
+  max-width: 120px;
+}

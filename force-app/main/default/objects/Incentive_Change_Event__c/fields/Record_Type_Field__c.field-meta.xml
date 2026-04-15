@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Record_Type_Field__c</fullName>
     <label>Record Type Field</label>
@@ -7,18 +7,32 @@
         <restricted>true</restricted>
         <valueSetDefinition>
             <sorted>false</sorted>
-            <value><fullName>Plan_Assignment</fullName><default>false</default><label>Plan Assignment</label></value>
-            <value><fullName>Quota</fullName><default>false</default><label>Quota</label></value>
-            <value><fullName>Calculation</fullName><default>false</default><label>Calculation</label></value>
-            <value><fullName>Draw</fullName><default>false</default><label>Draw</label></value>
-            <value><fullName>Template</fullName><default>false</default><label>Template</label></value>
-            <value><fullName>Opportunity</fullName><default>false</default><label>Opportunity</label></value>
-            <value><fullName>Comp_Plan</fullName><default>false</default><label>Comp Plan</label></value>
-            <value><fullName>CalculationInvalidation</fullName><default>false</default><label>Calculation Invalidation</label></value>
-            <value><fullName>Commission</fullName><default>false</default><label>Commission</label></value>
-            <value><fullName>Config_Change</fullName><default>false</default><label>Config Change</label></value>
-            <value><fullName>Period</fullName><default>false</default><label>Period</label></value>
-            <value><fullName>Forecast_Period</fullName><default>false</default><label>Forecast Period</label></value>
+            <value><fullName>Plan_Assignment</fullName><default
+        >false</default><label>Plan Assignment</label></value>
+            <value><fullName>Quota</fullName><default>false</default><label
+        >Quota</label></value>
+            <value><fullName>Calculation</fullName><default
+        >false</default><label>Calculation</label></value>
+            <value><fullName>Draw</fullName><default>false</default><label
+        >Draw</label></value>
+            <value><fullName>Template</fullName><default>false</default><label
+        >Template</label></value>
+            <value><fullName>Opportunity</fullName><default
+        >false</default><label>Opportunity</label></value>
+            <value><fullName>Comp_Plan</fullName><default>false</default><label
+        >Comp Plan</label></value>
+            <value><fullName>CalculationInvalidation</fullName><default
+        >false</default><label>Calculation Invalidation</label></value>
+            <value><fullName>Commission</fullName><default>false</default><label
+        >Commission</label></value>
+            <value><fullName>Config_Change</fullName><default
+        >false</default><label>Config Change</label></value>
+            <value><fullName>Period</fullName><default>false</default><label
+        >Period</label></value>
+            <value><fullName>Forecast_Period</fullName><default
+        >false</default><label>Forecast Period</label></value>
+            <value><fullName>Forecast_Override</fullName><default
+        >false</default><label>Forecast Override</label></value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

@@ -1,0 +1,23 @@
+<template>
+  <div class={containerClass} title={tooltipText}>
+    <template lwc:if={hasData}>
+      <div class="estimator-payout">
+        <span class="label">Est.</span>
+        <span class="value">{formattedPayout}</span>
+      </div>
+      <div class="estimator-rate">
+        <span class="label">Rate</span>
+        <span class="value">{formattedRate}</span>
+      </div>
+      <template lwc:if={isTierCrossing}>
+        <div class="estimator-tier tier-crossing">{tierImpact}</div>
+      </template>
+      <template lwc:elseif={tierImpact}>
+        <div class="estimator-tier">{tierImpact}</div>
+      </template>
+    </template>
+    <template lwc:else>
+      <span class="no-data">—</span>
+    </template>
+  </div>
+</template>

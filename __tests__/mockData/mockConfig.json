@@ -1,0 +1,144 @@
+{
+  "metrics": [
+    {
+      "metricId": "a01000000000001",
+      "name": "Revenue",
+      "label": "Revenue",
+      "metricType": "Currency",
+      "format": "Currency",
+      "isPrimary": true,
+      "isRequired": true,
+      "isEditable": true,
+      "sortOrder": 1,
+      "fieldApiName": "Amount"
+    },
+    {
+      "metricId": "a01000000000002",
+      "name": "ACV",
+      "label": "ACV",
+      "metricType": "Currency",
+      "format": "Currency",
+      "isPrimary": false,
+      "isRequired": false,
+      "isEditable": true,
+      "sortOrder": 2,
+      "fieldApiName": null
+    },
+    {
+      "metricId": "a01000000000003",
+      "name": "Quantity",
+      "label": "Quantity",
+      "metricType": "Number",
+      "format": "Number",
+      "isPrimary": false,
+      "isRequired": false,
+      "isEditable": true,
+      "sortOrder": 3,
+      "fieldApiName": null
+    }
+  ],
+  "categories": [
+    {
+      "categoryId": "a02000000000001",
+      "name": "Commit",
+      "label": "Commit",
+      "apiName": "Commit",
+      "color": "#04844B",
+      "countsTowardTarget": true,
+      "isTerminal": false,
+      "isHighConfidence": true,
+      "isRegression": false,
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "categoryId": "a02000000000002",
+      "name": "Best_Case",
+      "label": "Best Case",
+      "apiName": "Best_Case",
+      "color": "#1589EE",
+      "countsTowardTarget": true,
+      "isTerminal": false,
+      "isHighConfidence": false,
+      "isRegression": false,
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "categoryId": "a02000000000003",
+      "name": "Pipeline",
+      "label": "Pipeline",
+      "apiName": "Pipeline",
+      "color": "#F2CF00",
+      "countsTowardTarget": false,
+      "isTerminal": false,
+      "isHighConfidence": false,
+      "isRegression": false,
+      "sortOrder": 3,
+      "isActive": true
+    },
+    {
+      "categoryId": "a02000000000004",
+      "name": "Closed_Won",
+      "label": "Closed Won",
+      "apiName": "Closed_Won",
+      "color": "#706E6B",
+      "countsTowardTarget": true,
+      "isTerminal": true,
+      "isHighConfidence": true,
+      "isRegression": false,
+      "sortOrder": 4,
+      "isActive": true
+    },
+    {
+      "categoryId": "a02000000000005",
+      "name": "Lost",
+      "label": "Lost",
+      "apiName": "Lost",
+      "color": "#EA001E",
+      "countsTowardTarget": false,
+      "isTerminal": true,
+      "isHighConfidence": false,
+      "isRegression": true,
+      "sortOrder": 5,
+      "isActive": true
+    }
+  ],
+  "periods": [
+    {
+      "periodId": "a03000000000001",
+      "label": "Apr 2026",
+      "periodType": "Monthly",
+      "startDate": "2026-04-01",
+      "endDate": "2026-04-30",
+      "status": "Open",
+      "isBudgetMode": false
+    },
+    {
+      "periodId": "a03000000000002",
+      "label": "May 2026",
+      "periodType": "Monthly",
+      "startDate": "2026-05-01",
+      "endDate": "2026-05-31",
+      "status": "Scheduled",
+      "isBudgetMode": false
+    }
+  ],
+  "currentPeriod": {
+    "periodId": "a03000000000001",
+    "label": "Apr 2026",
+    "periodType": "Monthly",
+    "startDate": "2026-04-01",
+    "endDate": "2026-04-30",
+    "status": "Open",
+    "isBudgetMode": false
+  },
+  "periodType": "Monthly",
+  "currencyMode": "Single",
+  "corporateCurrency": "USD",
+  "attainmentLayout": "Current_Period",
+  "topLevelActionType": "FREEZE",
+  "topLevelActionLabel": "Freeze",
+  "paginationSize": 40,
+  "hierarchySource": "Ownership"
+}

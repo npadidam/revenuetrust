@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
+    <apiVersion>62.0</apiVersion>
+    <isExposed>true</isExposed>
+    <masterLabel>RevenueTrust Opportunity Forecast</masterLabel>
+    <description
+  >Inline forecast override for a single Opportunity. Place on Opportunity Lightning Record Page.</description>
+    <targets>
+        <target>lightning__RecordPage</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightning__RecordPage">
+            <objects>
+                <object>Opportunity</object>
+            </objects>
+            <property
+        name="showComments"
+        type="Boolean"
+        default="true"
+        label="Show Comment Thread"
+      />
+            <property
+        name="showIncentiveEstimate"
+        type="Boolean"
+        default="true"
+        label="Show Commission Estimate"
+      />
+            <property
+        name="showHealthScore"
+        type="Boolean"
+        default="true"
+        label="Show Deal Health Score"
+      />
+        </targetConfig>
+    </targetConfigs>
+</LightningComponentBundle>

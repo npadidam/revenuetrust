@@ -1,0 +1,48 @@
+/* RevenueTrust Design Tokens — §9 */
+:host {
+  --revt-trend-up: #04844b;
+  --revt-trend-flat: #706e6b;
+  --revt-status-new: #b0b0b0;
+}
+
+.inline-estimator {
+  font-size: 0.75rem;
+  line-height: 1.3;
+}
+
+.label {
+  color: var(--revt-trend-flat, #706e6b);
+  margin-right: 4px;
+}
+
+.value {
+  font-weight: 600;
+}
+
+.estimator-payout,
+.estimator-rate {
+  white-space: nowrap;
+}
+
+.estimator-tier {
+  font-size: 0.7rem;
+  color: var(--revt-trend-flat, #706e6b);
+  margin-top: 2px;
+}
+
+.tier-crossing {
+  color: var(--revt-trend-up, #04844b);
+  font-weight: 700;
+  background-color: #e8f5e9;
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.has-crossing {
+  border-left: 3px solid var(--revt-trend-up, #04844b);
+  padding-left: 4px;
+}
+
+.no-data {
+  color: var(--revt-status-new, #b0b0b0);
+}

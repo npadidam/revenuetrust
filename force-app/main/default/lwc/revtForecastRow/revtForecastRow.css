@@ -1,0 +1,231 @@
+/* RevenueTrust Design Tokens — §9 */
+:host {
+  display: contents;
+  --revt-status-new: #b0b0b0;
+  --revt-status-saved: #1589ee;
+  --revt-status-submitted: #04844b;
+  --revt-status-frozen: #7b64ff;
+  --revt-status-dirty: #f2cf00;
+  --revt-row-frozen-bg: #f3f3f3;
+  --revt-cell-dirty-border: #f2cf00;
+  --revt-health-green: #04844b;
+  --revt-health-yellow: #f2cf00;
+  --revt-health-red: #ea001e;
+  --revt-dedup-info: #0176d3;
+}
+
+.forecast-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #e5e5e5;
+  border-left: 4px solid var(--revt-status-new, #b0b0b0);
+  padding: 4px 0;
+  font-size: 0.8rem;
+  min-height: 36px;
+  overflow: visible;
+  position: relative;
+}
+
+.forecast-row:hover {
+  background-color: #f3f3f3;
+}
+
+.frozen-row {
+  background-color: var(--revt-row-frozen-bg, #f3f3f3);
+  border-left-color: var(--revt-status-frozen, #7b64ff);
+}
+
+.closed-row {
+  background-color: #f9f9f9;
+  border-left-color: #706e6b;
+  opacity: 0.85;
+}
+
+.dirty-row {
+  border-left-color: var(--revt-cell-dirty-border, #f2cf00);
+}
+
+.saved-row {
+  border-left-color: var(--revt-status-saved, #1589ee);
+}
+
+.submitted-row {
+  border-left-color: var(--revt-status-submitted, #04844b);
+}
+
+.error-row {
+  border-left-color: var(--revt-health-red, #ea001e);
+  background-color: #fef0ef;
+}
+
+.gcol {
+  padding: 2px 8px;
+  flex-shrink: 0;
+}
+
+.col-category {
+  overflow: visible;
+}
+
+.col-expand {
+  width: 28px;
+  flex: 0 0 28px;
+  text-align: center;
+}
+.col-name {
+  flex: 2 1 180px;
+  min-width: 140px;
+}
+.col-owner {
+  flex: 1.2 1 120px;
+  min-width: 100px;
+}
+.col-stage {
+  flex: 1 1 100px;
+  min-width: 80px;
+}
+.col-date {
+  flex: 0.9 1 90px;
+  min-width: 80px;
+}
+.col-amount {
+  flex: 0.9 1 90px;
+  min-width: 80px;
+  text-align: left;
+}
+.col-health {
+  width: 64px;
+  flex: 0 0 64px;
+  text-align: center;
+}
+.col-metric {
+  flex: 1 1 100px;
+  min-width: 80px;
+  text-align: left;
+}
+.col-category {
+  flex: 1 1 110px;
+  min-width: 90px;
+}
+.col-override-date {
+  flex: 0.9 1 90px;
+  min-width: 80px;
+}
+.col-status {
+  flex: 0.7 1 70px;
+  min-width: 60px;
+}
+.col-flags {
+  width: 28px;
+  flex: 0 0 28px;
+  text-align: center;
+}
+.col-divergence {
+  width: 28px;
+  flex: 0 0 28px;
+  text-align: center;
+}
+.col-estimator {
+  flex: 1.2 1 140px;
+  min-width: 120px;
+}
+
+.metric-input {
+  width: 100%;
+}
+.category-combo {
+  width: 100%;
+}
+.date-input {
+  width: 100%;
+}
+
+.metric-cell {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.prev-level-value {
+  font-size: 0.6rem;
+  color: #0176d3;
+  line-height: 1.1;
+  margin-top: 1px;
+  white-space: nowrap;
+}
+
+.prev-label {
+  font-weight: 700;
+  color: #0176d3;
+  text-decoration: none;
+  border-bottom: 1px dotted #0176d3;
+  cursor: help;
+  margin-right: 3px;
+}
+
+.prev-label:hover {
+  border-bottom-style: solid;
+}
+
+.expand-toggle {
+  cursor: pointer;
+}
+
+.owner-link {
+  color: var(--revt-dedup-info, #0176d3);
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: inherit;
+  font-size: inherit;
+  text-align: left;
+}
+.owner-link:hover {
+  text-decoration: underline;
+}
+
+.status-badge {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.status-new,
+.status-not_started {
+  background-color: #f3f3f3;
+  color: var(--revt-status-new);
+}
+.status-saved {
+  background-color: #eef4ff;
+  color: var(--revt-status-saved);
+}
+.status-submitted {
+  background-color: #e8f5e9;
+  color: var(--revt-status-submitted);
+}
+.status-frozen {
+  background-color: #ede7f6;
+  color: var(--revt-status-frozen);
+}
+.status-edited {
+  background-color: #fff8e1;
+  color: var(--revt-status-dirty);
+}
+
+.flag-icon {
+  color: var(--revt-health-yellow);
+}
+.divergence-icon {
+  color: var(--revt-health-red);
+}
+
+.detail-row {
+  background-color: #fafafa;
+  border-bottom: 1px solid #e5e5e5;
+  border-left: 4px solid #dddbda;
+}
+.detail-content {
+  border-top: 1px solid #e5e5e5;
+}
+.detail-section {
+  padding: 4px 0;
+}

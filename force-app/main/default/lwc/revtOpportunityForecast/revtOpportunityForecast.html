@@ -1,0 +1,233 @@
+<template>
+  <lightning-card title="Forecast Override" icon-name="standard:forecasts">
+    <!-- Status badge -->
+    <span slot="actions" class={statusBadgeClass}>{statusLabel}</span>
+
+    <template lwc:if={isLoading}>
+      <div class="slds-p-around_medium">
+        <lightning-spinner
+          alternative-text="Loading"
+          size="small"
+        ></lightning-spinner>
+      </div>
+    </template>
+
+    <!-- Not in scope message -->
+    <template lwc:if={showNotInScope}>
+      <div class="slds-p-around_medium">
+        <div class="slds-illustration slds-illustration_small">
+          <p class="slds-text-color_weak slds-text-body_small">
+            This opportunity is not in your current forecast scope.
+          </p>
+        </div>
+      </div>
+    </template>
+
+    <!-- No participant message -->
+    <template lwc:if={showNoParticipant}>
+      <div class="slds-p-around_medium">
+        <p class="slds-text-color_weak slds-text-body_small">
+          You are not a forecast participant for the current period.
+        </p>
+      </div>
+    </template>
+
+    <!-- Main forecast form -->
+    <template lwc:if={showForm}>
+      <div class="slds-p-around_medium">
+        <!-- Period selector -->
+        <lightning-combobox
+          label="Period"
+          value={selectedPeriodId}
+          options={periodOptions}
+          onchange={handlePeriodChange}
+          class="slds-m-bottom_small"
+        ></lightning-combobox>
+
+        <!-- Divergence alert -->
+        <template lwc:if={record.crmDivergence}>
+          <div
+            class="slds-notify slds-notify_alert slds-alert_warning slds-m-bottom_small"
+            role="alert"
+          >
+            <lightning-icon
+              icon-name="utility:warning"
+              size="x-small"
+              alternative-text="Divergence"
+              class="slds-m-right_x-small"
+            ></lightning-icon>
+            <span
+              >CRM values changed after submission:
+              {record.crmDivergenceDetails}</span
+            >
+            <div class="slds-m-top_xx-small">
+              <lightning-button
+                label="Accept CRM Values"
+                variant="neutral"
+                onclick={handleAcceptCrm}
+                class="slds-m-right_x-small"
+                disabled={isReadOnly}
+              ></lightning-button>
+              <lightning-button
+                label="Keep Override"
+                variant="neutral"
+                onclick={handleDismissDivergence}
+              ></lightning-button>
+            </div>
+          </div>
+        </template>
+
+        <!-- Category picker -->
+        <div class="slds-form-element slds-m-bottom_small">
+          <lightning-combobox
+            label="Category"
+            value={record.category}
+            options={categoryOptions}
+            onchange={handleCategoryChange}
+            disabled={isReadOnly}
+          ></lightning-combobox>
+          <template lwc:if={record.category}>
+            <c-revt-category-pill
+              label={record.category}
+              color={categoryColor}
+              class="slds-m-top_xx-small"
+            ></c-revt-category-pill>
+          </template>
+        </div>
+
+        <!-- Dynamic metric inputs -->
+        <template for:each={editableMetrics} for:item="metric">
+          <div
+            key={metric.key}
+            class="slds-form-element slds-m-bottom_small metric-row"
+          >
+            <lightning-input
+              type="number"
+              label={metric.label}
+              value={metric.value}
+              data-metric-key={metric.key}
+              step="1"
+              onchange={handleMetricChange}
+              disabled={isReadOnly}
+            ></lightning-input>
+            <template lwc:if={metric.trend}>
+              <c-revt-trend-arrow
+                trend={metric.trend}
+                class="slds-m-left_xx-small trend-inline"
+              ></c-revt-trend-arrow>
+            </template>
+          </div>
+        </template>
+
+        <!-- Close date override -->
+        <lightning-input
+          type="date"
+          label="Close Date Override"
+          value={record.closeDateOverride}
+          onchange={handleCloseDateChange}
+          disabled={isReadOnly}
+          class="slds-m-bottom_small"
+        ></lightning-input>
+
+        <!-- CRM values (read-only reference) -->
+        <div class="crm-values slds-box slds-box_xx-small slds-m-bottom_small">
+          <h4 class="slds-text-title_caps slds-m-bottom_xx-small">
+            CRM Values
+          </h4>
+          <div class="slds-grid slds-gutters_xx-small">
+            <div class="slds-col">
+              <span class="crm-label">Amount:</span>
+              <lightning-formatted-number
+                value={record.crmAmount}
+                format-style="currency"
+                currency-code="USD"
+                minimum-fraction-digits="0"
+              ></lightning-formatted-number>
+            </div>
+            <div class="slds-col">
+              <span class="crm-label">Stage:</span> {record.stage}
+            </div>
+            <div class="slds-col">
+              <span class="crm-label">Close:</span>
+              <lightning-formatted-date-time
+                value={record.closeDate}
+                year="numeric"
+                month="short"
+                day="2-digit"
+              ></lightning-formatted-date-time>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comments -->
+        <template lwc:if={showComments}>
+          <c-revt-forecast-comment-thread
+            record-id={recordId}
+            override-id={record.overrideId}
+            period-id={selectedPeriodId}
+            read-only={isReadOnly}
+          ></c-revt-forecast-comment-thread>
+        </template>
+
+        <!-- Health + Incentive footer -->
+        <div
+          class="slds-grid slds-gutters_small slds-m-top_small footer-section"
+        >
+          <template lwc:if={showHealthScore}>
+            <div class="slds-col">
+              <c-revt-health-badge
+                health-score={record.healthScore}
+                health-band={record.healthBand}
+              >
+              </c-revt-health-badge>
+            </div>
+          </template>
+          <template lwc:if={showIncentiveEstimate}>
+            <div class="slds-col">
+              <c-revt-inline-estimator
+                payout-estimate={record.payoutEstimate}
+                incentive-rate={record.incentiveRate}
+                threshold-proximity={record.thresholdProximity}
+                tier-impact={record.tierImpact}
+              >
+              </c-revt-inline-estimator>
+            </div>
+          </template>
+        </div>
+
+        <!-- Action buttons -->
+        <template lwc:if={showActions}>
+          <div class="slds-m-top_small slds-grid slds-grid_align-spread">
+            <div>
+              <lightning-button
+                label="Save"
+                variant="brand"
+                onclick={handleSave}
+                disabled={isSaveDisabled}
+                class="slds-m-right_x-small"
+              ></lightning-button>
+              <lightning-button
+                label="Submit"
+                variant="success"
+                onclick={handleSubmit}
+                disabled={isReadOnly}
+              ></lightning-button>
+            </div>
+            <template lwc:if={lastSavedDisplay}>
+              <span class="slds-text-body_small slds-text-color_weak">
+                Last saved: {lastSavedDisplay}
+              </span>
+            </template>
+          </div>
+        </template>
+
+        <!-- Read-only reason -->
+        <template lwc:if={readOnlyReason}>
+          <div class="slds-m-top_small slds-badge slds-badge_lightest">
+            Read Only: {readOnlyReason}
+          </div>
+        </template>
+      </div>
+    </template>
+  </lightning-card>
+</template>

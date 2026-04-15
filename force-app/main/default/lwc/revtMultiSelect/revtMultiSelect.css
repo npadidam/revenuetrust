@@ -1,0 +1,26 @@
+.multi-select-container {
+  position: relative;
+}
+
+.pill-container {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+.action-bar {
+  display: flex;
+  border-bottom: 1px solid #dddbda;
+}
+
+.action-btn {
+  font-size: 0.75rem;
+}
+
+.slds-dropdown {
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.slds-is-selected {
+  background-color: #f3f3f3;
+}

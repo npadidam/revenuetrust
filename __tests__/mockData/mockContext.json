@@ -1,0 +1,36 @@
+{
+  "participant": {
+    "participantId": "a04000000000001",
+    "userId": "005000000000001",
+    "level": 2,
+    "levelLabel": "Manager",
+    "scopeId": "DEFAULT",
+    "scopeName": "Default Scope",
+    "status": "Saved"
+  },
+  "attainment": {
+    "target": 1000000,
+    "achieved": 720000,
+    "attainmentPct": 72.0,
+    "currentTier": "Tier 2",
+    "currentRate": 8.0,
+    "nextTierName": "Tier 3",
+    "nextTierDistance": 280000
+  },
+  "availableScopes": [
+    {
+      "scopeId": "DEFAULT",
+      "scopeName": "Default Scope",
+      "region": null,
+      "parentScope": null
+    }
+  ],
+  "hierarchyLevel": 2,
+  "levelLabel": "Manager",
+  "canSubmit": true,
+  "canFreeze": false,
+  "canEdit": true,
+  "isBudgetMode": false,
+  "submissionStatus": "Saved",
+  "isDelegatedAccess": false
+}

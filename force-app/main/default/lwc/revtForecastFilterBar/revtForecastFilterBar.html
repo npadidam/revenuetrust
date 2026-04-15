@@ -1,0 +1,102 @@
+<template>
+  <div
+    class="filter-bar slds-grid slds-wrap slds-gutters_xx-small slds-p-around_x-small"
+  >
+    <!-- Search with auto-suggest -->
+    <div
+      class="slds-col slds-size_4-of-12 search-container"
+      onfocusout={handleSearchBlur}
+    >
+      <lightning-input
+        type="search"
+        label="Search deals"
+        placeholder="Search by name or owner..."
+        value={searchText}
+        variant="label-hidden"
+        onchange={handleSearchChange}
+        onkeydown={handleSearchKeydown}
+      ></lightning-input>
+      <!-- Auto-suggest dropdown -->
+      <template if:true={showSuggestions}>
+        <div class="suggestion-dropdown" role="listbox">
+          <template for:each={suggestions} for:item="sug">
+            <div
+              key={sug.id}
+              class="suggestion-item slds-p-horizontal_small slds-p-vertical_xx-small"
+              role="option"
+              data-id={sug.id}
+              onclick={handleSuggestionClick}
+            >
+              <span class="sug-name">{sug.name}</span>
+              <span class="sug-owner slds-text-color_weak slds-m-left_x-small"
+                >{sug.owner}</span
+              >
+            </div>
+          </template>
+        </div>
+      </template>
+    </div>
+
+    <!-- Stage multi-select -->
+    <div class="slds-col slds-size_2-of-12">
+      <c-revt-multi-select
+        label="Stage"
+        placeholder="Stage"
+        options={stageOptions}
+        selected-values={selectedStages}
+        onchange={handleStageChange}
+      ></c-revt-multi-select>
+    </div>
+
+    <!-- Health band multi-select -->
+    <div class="slds-col slds-size_2-of-12">
+      <c-revt-multi-select
+        label="Health"
+        placeholder="Health"
+        options={healthOptions}
+        selected-values={selectedHealthBands}
+        onchange={handleHealthChange}
+      ></c-revt-multi-select>
+    </div>
+
+    <!-- Toggles -->
+    <div class="slds-col slds-size_2-of-12 toggle-group">
+      <lightning-input
+        type="checkbox"
+        label="Overridden"
+        checked={overriddenOnly}
+        onchange={handleOverriddenChange}
+        class="filter-check"
+      ></lightning-input>
+      <lightning-input
+        type="checkbox"
+        label="Divergent"
+        checked={divergentOnly}
+        onchange={handleDivergentChange}
+        class="filter-check"
+      ></lightning-input>
+      <lightning-input
+        type="checkbox"
+        label="Pending"
+        checked={pendingApprovalOnly}
+        onchange={handlePendingChange}
+        class="filter-check"
+      ></lightning-input>
+    </div>
+
+    <!-- Clear All -->
+    <div class="slds-col slds-size_1-of-12 slds-text-align_right">
+      <lightning-button
+        label="Clear"
+        variant="base"
+        onclick={handleClearAll}
+        title="Clear all filters"
+        class="clear-btn"
+      ></lightning-button>
+    </div>
+  </div>
+
+  <template if:true={isBudgetMode}>
+    <div class="slds-badge slds-m-left_small budget-badge">Budget Mode</div>
+  </template>
+</template>

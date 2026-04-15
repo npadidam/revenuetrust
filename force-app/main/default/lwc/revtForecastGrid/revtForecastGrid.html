@@ -1,0 +1,125 @@
+<template>
+  <div class="forecast-grid-wrapper" onkeydown={handleKeyDown}>
+    <!-- Column headers -->
+    <div class="grid-header slds-grid slds-text-title_bold" role="row">
+      <div class="gcol col-expand" role="columnheader"></div>
+      <div
+        class="gcol col-name sortable"
+        role="columnheader"
+        aria-sort={getAriaSort_recordName}
+        onclick={handleSortName}
+      >
+        <span class="slds-truncate">Deal Name</span>
+        <template lwc:if={isSortedByName}>
+          <lightning-icon icon-name={sortIcon} size="xx-small"></lightning-icon>
+        </template>
+      </div>
+      <div
+        class="gcol col-owner sortable"
+        role="columnheader"
+        aria-sort={getAriaSort_ownerName}
+        onclick={handleSortOwner}
+      >
+        <span class="slds-truncate">Owner</span>
+        <template lwc:if={isSortedByOwner}>
+          <lightning-icon icon-name={sortIcon} size="xx-small"></lightning-icon>
+        </template>
+      </div>
+      <div class="gcol col-stage" role="columnheader">Stage</div>
+      <div
+        class="gcol col-date sortable"
+        role="columnheader"
+        aria-sort={getAriaSort_closeDate}
+        onclick={handleSortCloseDate}
+      >
+        <span>Close Date</span>
+        <template lwc:if={isSortedByCloseDate}>
+          <lightning-icon icon-name={sortIcon} size="xx-small"></lightning-icon>
+        </template>
+      </div>
+      <div class="gcol col-amount" role="columnheader">CRM Amount</div>
+      <template lwc:if={showHealthBadge}>
+        <div
+          class="gcol col-health sortable"
+          role="columnheader"
+          onclick={handleSortHealth}
+        >
+          Health
+        </div>
+      </template>
+      <!-- Dynamic metric headers -->
+      <template for:each={metricHeaders} for:item="mh">
+        <div
+          key={mh.key}
+          class="gcol col-metric sortable"
+          role="columnheader"
+          data-sort-field={mh.key}
+          onclick={handleSortMetric}
+        >
+          <span class="slds-truncate">{mh.label}</span>
+        </div>
+      </template>
+      <div
+        class="gcol col-category sortable"
+        role="columnheader"
+        onclick={handleSortCategory}
+      >
+        Category
+      </div>
+      <div class="gcol col-override-date" role="columnheader">
+        Override Close
+      </div>
+      <div class="gcol col-status" role="columnheader">Status</div>
+      <div class="gcol col-flags" role="columnheader"></div>
+      <div class="gcol col-divergence" role="columnheader"></div>
+      <template lwc:if={showInlineEstimator}>
+        <div class="gcol col-estimator" role="columnheader">Est. Impact</div>
+      </template>
+    </div>
+
+    <!-- Data rows -->
+    <div class="grid-body" role="grid" aria-label="Forecast Grid">
+      <template for:each={records} for:item="rec">
+        <c-revt-forecast-row
+          key={rec.recordId}
+          record={rec}
+          config={config}
+          context={context}
+          is-locked={isLocked}
+          is-expanded={rec._isExpanded}
+          is-dirty={rec._isDirty}
+          row-error={rec._rowError}
+          show-health-badge={showHealthBadge}
+          show-inline-estimator={showInlineEstimator}
+          period-id={periodId}
+        ></c-revt-forecast-row>
+      </template>
+    </div>
+
+    <!-- Pagination -->
+    <div
+      class="slds-grid slds-grid_align-spread slds-p-vertical_x-small pagination-bar"
+    >
+      <div class="slds-col">
+        <span class="slds-text-body_small slds-text-color_weak">
+          Showing {showingFrom}-{showingTo} of {totalCount} records
+        </span>
+      </div>
+      <div class="slds-col">
+        <lightning-button-group>
+          <lightning-button
+            label="Prev"
+            onclick={handlePrevPage}
+            disabled={isPrevDisabled}
+          ></lightning-button>
+          <lightning-button label={pageLabel} disabled></lightning-button>
+          <lightning-button
+            label="Next"
+            onclick={handleNextPage}
+            disabled={isNextDisabled}
+          ></lightning-button>
+        </lightning-button-group>
+      </div>
+    </div>
+  </div>
+</template>

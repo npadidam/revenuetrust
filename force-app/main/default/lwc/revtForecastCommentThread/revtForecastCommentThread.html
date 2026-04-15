@@ -1,0 +1,78 @@
+<template>
+  <div class="comment-thread">
+    <h3 class="slds-text-heading_x-small slds-m-bottom_x-small">
+      Comments
+      <template lwc:if={commentCount}>
+        <span class="slds-badge slds-m-left_xx-small">{commentCount}</span>
+      </template>
+    </h3>
+
+    <template lwc:if={isLoading}>
+      <lightning-spinner
+        alternative-text="Loading comments"
+        size="small"
+      ></lightning-spinner>
+    </template>
+
+    <template lwc:if={hasComments}>
+      <ul class="slds-has-dividers_bottom-space comment-list" role="list">
+        <template for:each={comments} for:item="c">
+          <li
+            key={c.commentId}
+            class="slds-item slds-p-vertical_xx-small"
+            role="listitem"
+          >
+            <div class="comment-header">
+              <span class="comment-author">{c.author}</span>
+              <template lwc:if={c.level}>
+                <span
+                  class="comment-level slds-badge slds-badge_lightest slds-m-left_xx-small"
+                >
+                  L{c.level}
+                </span>
+              </template>
+              <span class="comment-date slds-m-left_x-small"
+                >{c.formattedDate}</span
+              >
+              <template lwc:if={c.commentType}>
+                <span class={c.typeClass}>{c.commentType}</span>
+              </template>
+            </div>
+            <div class="comment-body slds-m-top_xx-small">{c.comment}</div>
+          </li>
+        </template>
+      </ul>
+    </template>
+    <template lwc:elseif={showEmpty}>
+      <p class="slds-text-color_weak slds-text-body_small">No comments yet.</p>
+    </template>
+
+    <template lwc:if={canAddComment}>
+      <div class="new-comment slds-m-top_small">
+        <lightning-combobox
+          label="Type"
+          value={newCommentType}
+          options={commentTypeOptions}
+          variant="label-hidden"
+          class="slds-m-bottom_xx-small type-picker"
+          onchange={handleTypeChange}
+        ></lightning-combobox>
+        <lightning-textarea
+          label="Add comment"
+          placeholder="Add a note about this deal..."
+          value={newCommentText}
+          variant="label-hidden"
+          max-length="1000"
+          onchange={handleTextChange}
+        ></lightning-textarea>
+        <lightning-button
+          label="Post"
+          variant="brand"
+          class="slds-m-top_xx-small"
+          onclick={handlePost}
+          disabled={isPostDisabled}
+        ></lightning-button>
+      </div>
+    </template>
+  </div>
+</template>

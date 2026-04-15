@@ -1,0 +1,112 @@
+<template>
+  <div class="multi-select-container" onfocusout={handleFocusOut}>
+    <label lwc:if={label} class="slds-form-element__label">{label}</label>
+    <div class="slds-combobox-group">
+      <div
+        class={comboboxClass}
+        aria-expanded={isDropdownOpen}
+        aria-haspopup="listbox"
+        role="combobox"
+      >
+        <div
+          class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right"
+          role="none"
+        >
+          <input
+            type="text"
+            class="slds-input slds-combobox__input"
+            placeholder={computedPlaceholder}
+            value={searchTerm}
+            onfocus={openDropdown}
+            oninput={handleSearchInput}
+            role="textbox"
+            autocomplete="off"
+            aria-label={label}
+          />
+          <span
+            class="slds-icon_container slds-icon-utility-down slds-input__icon slds-input__icon_right"
+          >
+            <lightning-icon
+              icon-name="utility:down"
+              size="xx-small"
+              alternative-text="Show options"
+            ></lightning-icon>
+          </span>
+        </div>
+        <div
+          lwc:if={isDropdownOpen}
+          class="slds-dropdown slds-dropdown_length-7 slds-dropdown_fluid"
+          role="listbox"
+        >
+          <div
+            class="slds-p-horizontal_x-small slds-p-vertical_xx-small action-bar"
+          >
+            <lightning-button
+              label="Select All"
+              variant="base"
+              onclick={handleSelectAll}
+              class="slds-m-right_x-small action-btn"
+            ></lightning-button>
+            <lightning-button
+              label="Clear All"
+              variant="base"
+              onclick={handleClearAll}
+              class="action-btn"
+            ></lightning-button>
+          </div>
+          <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+            <template for:each={filteredOptions} for:item="opt">
+              <li
+                key={opt.value}
+                role="presentation"
+                class="slds-listbox__item"
+              >
+                <div
+                  class={opt.itemClass}
+                  role="option"
+                  aria-selected={opt.selected}
+                  data-value={opt.value}
+                  onclick={handleOptionClick}
+                >
+                  <span class="slds-media__figure slds-listbox__option-icon">
+                    <template lwc:if={opt.selected}>
+                      <lightning-icon
+                        icon-name="utility:check"
+                        size="xx-small"
+                        alternative-text="Selected"
+                      ></lightning-icon>
+                    </template>
+                  </span>
+                  <span class="slds-media__body">
+                    <span class="slds-truncate">{opt.label}</span>
+                  </span>
+                </div>
+              </li>
+            </template>
+            <template lwc:if={noResults}>
+              <li class="slds-listbox__item">
+                <div
+                  class="slds-media slds-listbox__option slds-p-around_x-small"
+                >
+                  <span class="slds-text-color_weak">No matching options</span>
+                </div>
+              </li>
+            </template>
+          </ul>
+        </div>
+      </div>
+    </div>
+    <div lwc:if={hasSelections} class="pill-container slds-m-top_xx-small">
+      <template for:each={selectedPills} for:item="pill">
+        <lightning-pill
+          key={pill.value}
+          label={pill.label}
+          name={pill.value}
+          onremove={handlePillRemove}
+          class="slds-m-right_xx-small slds-m-bottom_xx-small"
+        >
+        </lightning-pill>
+      </template>
+    </div>
+  </div>
+</template>

@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
     <fullName>Comment_Type__c</fullName>
     <label>Comment Type</label>
@@ -8,11 +8,20 @@
         <restricted>true</restricted>
         <valueSetDefinition>
             <sorted>false</sorted>
-            <value><fullName>Note</fullName><default>false</default><label>Note</label></value>
-            <value><fullName>Governance_Justification</fullName><default>false</default><label>Governance_Justification</label></value>
-            <value><fullName>Override_Reason</fullName><default>false</default><label>Override_Reason</label></value>
-            <value><fullName>Category_Change_Reason</fullName><default>false</default><label>Category_Change_Reason</label></value>
-            <value><fullName>System_Event</fullName><default>false</default><label>System_Event</label></value>
+            <value><fullName>Note</fullName><default>false</default><label
+        >Note</label></value>
+            <value><fullName>Governance_Justification</fullName><default
+        >false</default><label>Governance_Justification</label></value>
+            <value><fullName>Override_Reason</fullName><default
+        >false</default><label>Override_Reason</label></value>
+            <value><fullName>Category_Change_Reason</fullName><default
+        >false</default><label>Category_Change_Reason</label></value>
+            <value><fullName>System_Event</fullName><default
+        >false</default><label>System_Event</label></value>
+            <value><fullName>Escalation</fullName><default>false</default><label
+        >Escalation</label></value>
+            <value><fullName>Question</fullName><default>false</default><label
+        >Question</label></value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

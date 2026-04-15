@@ -1,8 +1,17 @@
-<?xml version="1.0" encoding="UTF-8"?>
+<?xml version="1.0" encoding="UTF-8" ?>
 <PermissionSet xmlns="http://soap.sforce.com/2006/04/metadata">
-    <description>Full access to all RevenueTrust custom fields. Assign to System Administrator.</description>
+    <applicationVisibilities>
+        <application>RevenueTrust</application>
+        <visible>true</visible>
+    </applicationVisibilities>
+    <description
+  >Full access to all RevenueTrust custom objects, fields, app, and tabs. Assign to admins and managers.</description>
     <hasActivationRequired>false</hasActivationRequired>
     <label>RevenueTrust Full Access</label>
+    <tabSettings>
+        <tab>REVT_Forecast</tab>
+        <visibility>Visible</visibility>
+    </tabSettings>
     <fieldPermissions>
         <editable>true</editable>
         <field>AI_Provider_Config__c.Audit_Logging__c</field>
@@ -2930,7 +2939,8 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Health_Score_Configuration__c.Competitor_Opp_Lookup_Field__c</field>
+        <field
+    >Health_Score_Configuration__c.Competitor_Opp_Lookup_Field__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -3265,7 +3275,8 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Incentive_Configuration__c.Default_Exit_Projected_Policy__c</field>
+        <field
+    >Incentive_Configuration__c.Default_Exit_Projected_Policy__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
@@ -3440,7 +3451,8 @@
     </fieldPermissions>
     <fieldPermissions>
         <editable>true</editable>
-        <field>Incentive_Plan_Template__c.Commissionable_Value_Override__c</field>
+        <field
+    >Incentive_Plan_Template__c.Commissionable_Value_Override__c</field>
         <readable>true</readable>
     </fieldPermissions>
     <fieldPermissions>
