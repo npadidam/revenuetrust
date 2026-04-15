@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Attainment_Source__c</fullName>
+    <label>Attainment Source</label>
+    <description
+  >How attainment (achieved amount) is calculated. Quota Record: reads from Quota__c.Achieved_Amount__c (maintained by Incentives module). Live from Forecast: computes from Closed Won category overrides in the current period. Hybrid: uses Quota if available, falls back to live calculation.</description>
+    <inlineHelpText
+  >Quota Record: uses Incentives module quota tracking. Live from Forecast: computes from Closed Won deals. Hybrid: Quota if available, otherwise live.</inlineHelpText>
+    <type>Picklist</type>
+    <required>false</required>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Quota_Record</fullName><default
+        >true</default><label>Quota Record</label></value>
+            <value><fullName>Live_From_Forecast</fullName><default
+        >false</default><label>Live from Forecast</label></value>
+            <value><fullName>Hybrid</fullName><default>false</default><label
+        >Hybrid</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

@@ -2362,31 +2362,68 @@ public with sharing class ForecastService {
   private static AttainmentData loadAttainmentData(Id userId, Id periodId) {
     AttainmentData data = new AttainmentData();
 
-    // Find comp plan for user to get quota
-    List<Comp_Plan__c> plans = [
-      SELECT Id
-      FROM Comp_Plan__c
-      WHERE Sales_Rep__c = :userId AND Status__c = 'Active'
-      LIMIT 1
-    ];
+    // Check config for attainment source
+    Forecast_Configuration__c config = ForecastDataService.getActiveConfig();
+    String source = config != null &&
+      config.Attainment_Source__c != null
+      ? config.Attainment_Source__c
+      : 'Quota_Record';
 
-    if (!plans.isEmpty()) {
-      List<Quota__c> quotas = [
-        SELECT Id, Target_Amount__c, Achieved_Amount__c
-        FROM Quota__c
-        WHERE Comp_Plan__c = :plans[0].Id AND Status__c = 'Active'
+    Boolean useQuota = (source == 'Quota_Record' || source == 'Hybrid');
+    Boolean useLive = (source == 'Live_From_Forecast' || source == 'Hybrid');
+
+    // Source 1: Quota record (from Incentives module)
+    if (useQuota) {
+      List<Comp_Plan__c> plans = [
+        SELECT Id
+        FROM Comp_Plan__c
+        WHERE Sales_Rep__c = :userId AND Status__c = 'Active'
         LIMIT 1
       ];
 
-      if (!quotas.isEmpty()) {
-        Quota__c q = quotas[0];
-        data.target = q.Target_Amount__c != null ? q.Target_Amount__c : 0;
-        data.achieved = q.Achieved_Amount__c != null ? q.Achieved_Amount__c : 0;
-        data.attainmentPct = data.target > 0
-          ? (data.achieved / data.target) * 100
-          : 0;
+      if (!plans.isEmpty()) {
+        List<Quota__c> quotas = [
+          SELECT Id, Target_Amount__c, Achieved_Amount__c
+          FROM Quota__c
+          WHERE Comp_Plan__c = :plans[0].Id AND Status__c = 'Active'
+          LIMIT 1
+        ];
+
+        if (!quotas.isEmpty()) {
+          Quota__c q = quotas[0];
+          data.target = q.Target_Amount__c != null ? q.Target_Amount__c : 0;
+          data.achieved = q.Achieved_Amount__c != null
+            ? q.Achieved_Amount__c
+            : 0;
+        }
       }
     }
+
+    // Source 2: Live from Closed Won overrides in this period
+    if (useLive && (data.achieved == 0 || source == 'Live_From_Forecast')) {
+      AggregateResult[] aggs = [
+        SELECT SUM(Metric_1_Value__c) closedTotal
+        FROM Forecast_Override__c
+        WHERE
+          Forecast_Period__c = :periodId
+          AND User__c = :userId
+          AND Forecast_Category__c = 'Closed_Won'
+      ];
+      if (!aggs.isEmpty() && aggs[0].get('closedTotal') != null) {
+        Decimal liveAchieved = (Decimal) aggs[0].get('closedTotal');
+        if (source == 'Live_From_Forecast') {
+          data.achieved = liveAchieved;
+        } else {
+          // Hybrid: use live if quota achieved is 0
+          data.achieved = liveAchieved;
+        }
+      }
+    }
+
+    // Compute attainment %
+    data.attainmentPct = data.target > 0
+      ? (data.achieved / data.target) * 100
+      : 0;
 
     return data;
   }

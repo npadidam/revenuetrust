@@ -135,6 +135,68 @@ export default class RevtForecastApp extends LightningElement {
       });
   }
 
+  // ── Attainment card ──
+
+  get showAttainment() {
+    return (
+      this.currentSummary &&
+      (this.currentSummary.target > 0 || this.currentSummary.achieved > 0)
+    );
+  }
+
+  get formattedAttainmentPct() {
+    const pct = this.currentSummary?.attainmentPct || 0;
+    return Math.round(pct) + "%";
+  }
+
+  get formattedAttainmentDetail() {
+    const s = this.currentSummary;
+    if (!s) return "";
+    const achieved = s.achieved
+      ? "$" + Math.round(s.achieved / 1000).toLocaleString() + "K"
+      : "$0";
+    const target = s.target
+      ? "$" + Math.round(s.target / 1000).toLocaleString() + "K"
+      : "$0";
+    return achieved + " of " + target;
+  }
+
+  get attainmentColorStyle() {
+    return "background-color: " + this._attainmentColor;
+  }
+
+  get attainmentColorText() {
+    return "color: " + this._attainmentColor;
+  }
+
+  get _attainmentColor() {
+    const pct = this.currentSummary?.attainmentPct || 0;
+    if (pct >= 100) return "#1589EE"; // Above target — blue
+
+    // Time-aware coloring: compare attainment to expected pace
+    // Expected pace = (elapsed months / total months) * 100
+    const period = this.config?.currentPeriod;
+    let expectedPct = 50; // default midpoint if no period info
+    if (period?.startDate) {
+      // Calculate fiscal year progress
+      // Assume fiscal year = 12 months from first period's start month
+      const now = new Date();
+      const periodStart = new Date(period.startDate);
+      const fiscalYearStart = new Date(periodStart.getFullYear(), 0, 1); // Jan 1
+      const elapsed = (now - fiscalYearStart) / (365.25 * 24 * 60 * 60 * 1000);
+      expectedPct = Math.min(elapsed * 100, 100);
+    }
+
+    // Compare actual vs expected pace
+    const paceRatio = expectedPct > 0 ? pct / expectedPct : 1;
+
+    if (paceRatio >= 0.9) return "#04844B"; // On/above pace — green
+    if (paceRatio >= 0.7) return "#F2CF00"; // Slightly behind — yellow
+    return "#EA001E"; // Significantly behind — red
+  }
+
+  // ── Coverage card ──
+
   get showCoverage() {
     return this.currentSummary?.coverageRatio != null;
   }
@@ -145,11 +207,46 @@ export default class RevtForecastApp extends LightningElement {
     return ratio.toFixed(1) + "x";
   }
 
+  get formattedCoverageDetail() {
+    const s = this.currentSummary;
+    if (!s || !s.remaining) return "";
+    // Pipeline = sum of non-terminal category totals
+    let pipeline = 0;
+    if (s.categoryTotals) {
+      for (const [key, val] of Object.entries(s.categoryTotals)) {
+        // Exclude terminal categories (Closed_Won, Lost)
+        if (key !== "Closed_Won" && key !== "Lost") {
+          pipeline += val || 0;
+        }
+      }
+    }
+    const pipeStr = "$" + Math.round(pipeline / 1000).toLocaleString() + "K";
+    const remStr = "$" + Math.round(s.remaining / 1000).toLocaleString() + "K";
+    return pipeStr + " / " + remStr;
+  }
+
   get coverageAmountClass() {
     const ratio = this.currentSummary?.coverageRatio || 0;
     if (ratio >= 3) return "cc-amount coverage-healthy";
     if (ratio >= 1.5) return "cc-amount coverage-caution";
     return "cc-amount coverage-low";
+  }
+
+  // ── Tier card ──
+
+  get showTierInfo() {
+    return this.currentSummary?.currentTier || this.currentSummary?.currentRate;
+  }
+
+  get formattedCurrentRate() {
+    const rate = this.currentSummary?.currentRate;
+    return rate != null ? rate + "%" : "";
+  }
+
+  get formattedNextTierDistance() {
+    const dist = this.currentSummary?.nextTierDistance;
+    if (dist == null) return "$0";
+    return "$" + Math.round(dist / 1000).toLocaleString() + "K";
   }
 
   handleCategoryCardClick(event) {
@@ -239,6 +336,15 @@ export default class RevtForecastApp extends LightningElement {
     return (
       this.isLocked || !this.context?.canEdit || this.dirtyOverrides.size === 0
     );
+  }
+
+  get hasDirtyChanges() {
+    return this.dirtyOverrides.size > 0;
+  }
+
+  get dirtyCountLabel() {
+    const count = this.dirtyOverrides.size;
+    return count + (count === 1 ? " unsaved change" : " unsaved changes");
   }
 
   get distinctStages() {

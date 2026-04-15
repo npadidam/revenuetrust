@@ -5,14 +5,15 @@
     <div class="gcol col-expand">
       <button
         class="slds-button slds-button_icon expand-toggle"
-        title="Expand"
+        title={expandTooltip}
         onclick={handleToggleExpand}
         aria-expanded={isExpanded}
       >
         <lightning-icon
           icon-name={expandIcon}
-          size="xx-small"
+          size="x-small"
           alternative-text="Toggle details"
+          class="expand-chevron"
         ></lightning-icon>
       </button>
     </div>
@@ -181,9 +182,18 @@
       <span class={statusBadgeClass}>{displayStatus}</span>
     </div>
 
-    <!-- Flags (governance) -->
+    <!-- Flags (governance + pending approval) -->
     <div class="gcol col-flags">
-      <template lwc:if={hasGovernanceFlags}>
+      <template lwc:if={record.pendingApproval}>
+        <lightning-icon
+          icon-name="utility:lock"
+          size="xx-small"
+          alternative-text="Pending governance approval — editing blocked"
+          title="Pending governance approval — editing blocked"
+          class="lock-icon"
+        ></lightning-icon>
+      </template>
+      <template lwc:elseif={hasGovernanceFlags}>
         <lightning-icon
           icon-name="utility:warning"
           size="xx-small"
@@ -224,44 +234,14 @@
   <!-- Expandable detail row -->
   <template lwc:if={isExpanded}>
     <div class="detail-row slds-p-around_small" data-row-id={record.recordId}>
-      <div class="slds-grid slds-gutters_x-small detail-content">
-        <!-- Comment thread -->
-        <div class="slds-col slds-size_1-of-2">
-          <c-revt-forecast-comment-thread
-            record-id={record.recordId}
-            override-id={record.overrideId}
-            period-id={periodId}
-            read-only={isDisabled}
-          >
-          </c-revt-forecast-comment-thread>
-        </div>
-        <!-- Additional details -->
-        <div class="slds-col slds-size_1-of-2">
-          <template lwc:if={hasPreviousLevelValues}>
-            <div class="detail-section">
-              <h4 class="slds-text-heading_x-small">Previous Level</h4>
-              <template for:each={previousLevelDisplay} for:item="pv">
-                <div key={pv.key} class="slds-text-body_small">
-                  {pv.label}:
-                  <lightning-formatted-number
-                    value={pv.value}
-                    format-style="currency"
-                    currency-code="USD"
-                    minimum-fraction-digits="0"
-                  ></lightning-formatted-number>
-                </div>
-              </template>
-            </div>
-          </template>
-          <template lwc:if={record.metricValuesPreDedup}>
-            <div class="detail-section slds-m-top_x-small">
-              <h4 class="slds-text-heading_x-small">Deal Share Adjustment</h4>
-              <p class="slds-text-body_small slds-text-color_weak">
-                Values adjusted for multi-scope deal contribution.
-              </p>
-            </div>
-          </template>
-        </div>
+      <div class="detail-content">
+        <c-revt-forecast-comment-thread
+          record-id={record.recordId}
+          override-id={record.overrideId}
+          period-id={periodId}
+          read-only={isDisabled}
+        >
+        </c-revt-forecast-comment-thread>
       </div>
     </div>
   </template>

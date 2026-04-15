@@ -19,9 +19,9 @@
   align-items: center;
   border-bottom: 1px solid #e5e5e5;
   border-left: 4px solid var(--revt-status-new, #b0b0b0);
-  padding: 4px 0;
+  padding: 2px 0;
   font-size: 0.8rem;
-  min-height: 36px;
+  min-height: 32px;
   overflow: visible;
   position: relative;
 }
@@ -53,13 +53,24 @@
   border-left-color: var(--revt-status-submitted, #04844b);
 }
 
+/* Subtle health band row tints */
+.health-green {
+  background-color: rgba(4, 132, 75, 0.03);
+}
+.health-yellow {
+  background-color: rgba(242, 207, 0, 0.05);
+}
+.health-red {
+  background-color: rgba(234, 0, 30, 0.04);
+}
+
 .error-row {
   border-left-color: var(--revt-health-red, #ea001e);
   background-color: #fef0ef;
 }
 
 .gcol {
-  padding: 2px 8px;
+  padding: 1px 6px;
   flex-shrink: 0;
 }
 
@@ -169,6 +180,17 @@
 
 .expand-toggle {
   cursor: pointer;
+  border-radius: 4px;
+  padding: 2px;
+  transition: background-color 0.15s;
+}
+
+.expand-toggle:hover {
+  background-color: #e5e5e5;
+}
+
+.expand-chevron {
+  color: #706e6b;
 }
 
 .owner-link {
@@ -213,6 +235,9 @@
 
 .flag-icon {
   color: var(--revt-health-yellow);
+}
+.lock-icon {
+  color: var(--revt-health-red, #ea001e);
 }
 .divergence-icon {
   color: var(--revt-health-red);

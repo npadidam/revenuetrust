@@ -109,13 +109,52 @@
           </div>
         </div>
       </template>
-      <!-- Coverage ratio card -->
+      <!-- Attainment card -->
+      <template lwc:if={showAttainment}>
+        <div class="slds-col">
+          <div class="category-card attainment-card">
+            <div class="cc-color-bar" style={attainmentColorStyle}></div>
+            <div class="cc-body">
+              <div class="cc-header">
+                <span class="cc-label">Attainment</span>
+                <span class="cc-amount" style={attainmentColorText}
+                  >{formattedAttainmentPct}</span
+                >
+              </div>
+              <div class="cc-count">{formattedAttainmentDetail}</div>
+            </div>
+          </div>
+        </div>
+      </template>
+      <!-- Coverage card -->
       <template lwc:if={showCoverage}>
         <div class="slds-col">
           <div class="category-card coverage-card">
             <div class="cc-body">
-              <div class="cc-label">Coverage</div>
-              <div class={coverageAmountClass}>{formattedCoverage}</div>
+              <div class="cc-header">
+                <span class="cc-label">Coverage</span>
+                <span class={coverageAmountClass}>{formattedCoverage}</span>
+              </div>
+              <div class="cc-count">{formattedCoverageDetail}</div>
+            </div>
+          </div>
+        </div>
+      </template>
+      <!-- Tier card -->
+      <template lwc:if={showTierInfo}>
+        <div class="slds-col">
+          <div class="category-card tier-card">
+            <div class="cc-body">
+              <div class="cc-header">
+                <span class="cc-label">{currentSummary.currentTier}</span>
+                <span class="cc-amount">{formattedCurrentRate}</span>
+              </div>
+              <template lwc:if={currentSummary.nextTierName}>
+                <div class="cc-count">
+                  Next: {currentSummary.nextTierName}
+                  ({formattedNextTierDistance} away)
+                </div>
+              </template>
             </div>
           </div>
         </div>
@@ -145,100 +184,116 @@
     </div>
 
     <!-- ═══ ACTION BAR ═══ -->
-    <div class="slds-p-around_small slds-grid slds-grid_align-end action-bar">
-      <!-- Copy dropdown -->
-      <template lwc:if={showCopyButton}>
+    <div class="slds-grid slds-grid_align-spread action-bar">
+      <!-- Dirty changes indicator -->
+      <div class="slds-col slds-grid slds-grid_vertical-align-center">
+        <template lwc:if={hasDirtyChanges}>
+          <span class="dirty-indicator">
+            <lightning-icon
+              icon-name="utility:warning"
+              size="xx-small"
+              alternative-text="Unsaved changes"
+              class="slds-m-right_xx-small"
+            ></lightning-icon>
+            {dirtyCountLabel}
+          </span>
+        </template>
+      </div>
+      <div class="slds-col slds-grid slds-grid_align-end">
+        <!-- Copy dropdown -->
+        <template lwc:if={showCopyButton}>
+          <lightning-button-menu
+            alternative-text="Copy"
+            label="Copy"
+            variant="neutral"
+            menu-alignment="bottom-right"
+            onselect={handleCopySelect}
+            class="slds-m-right_x-small"
+            disabled={isLocked}
+          >
+            <template lwc:if={canCopyFromLevel}>
+              <lightning-menu-item
+                label="From Previous Level (Overwrite)"
+                value="level_OVERWRITE"
+              ></lightning-menu-item>
+              <lightning-menu-item
+                label="From Previous Level (Merge)"
+                value="level_MERGE"
+              ></lightning-menu-item>
+              <lightning-menu-item
+                label="From Previous Level (Skip Edited)"
+                value="level_SKIP_EDITED"
+              ></lightning-menu-item>
+              <lightning-menu-divider></lightning-menu-divider>
+            </template>
+            <lightning-menu-item
+              label="From Last Forecast (Overwrite)"
+              value="last_OVERWRITE"
+            ></lightning-menu-item>
+            <lightning-menu-item
+              label="From Last Forecast (Merge)"
+              value="last_MERGE"
+            ></lightning-menu-item>
+            <lightning-menu-item
+              label="From Last Forecast (Skip Edited)"
+              value="last_SKIP_EDITED"
+            ></lightning-menu-item>
+          </lightning-button-menu>
+        </template>
+
+        <!-- Export -->
         <lightning-button-menu
-          alternative-text="Copy"
-          label="Copy"
+          alternative-text="Export"
+          label="Export"
+          icon-name="utility:download"
           variant="neutral"
           menu-alignment="bottom-right"
-          onselect={handleCopySelect}
+          onselect={handleExportSelect}
           class="slds-m-right_x-small"
           disabled={isLocked}
         >
-          <template lwc:if={canCopyFromLevel}>
-            <lightning-menu-item
-              label="From Previous Level (Overwrite)"
-              value="level_OVERWRITE"
-            ></lightning-menu-item>
-            <lightning-menu-item
-              label="From Previous Level (Merge)"
-              value="level_MERGE"
-            ></lightning-menu-item>
-            <lightning-menu-item
-              label="From Previous Level (Skip Edited)"
-              value="level_SKIP_EDITED"
-            ></lightning-menu-item>
-            <lightning-menu-divider></lightning-menu-divider>
-          </template>
           <lightning-menu-item
-            label="From Last Forecast (Overwrite)"
-            value="last_OVERWRITE"
+            label="CSV (.csv)"
+            value="csv"
+            icon-name="utility:file"
           ></lightning-menu-item>
           <lightning-menu-item
-            label="From Last Forecast (Merge)"
-            value="last_MERGE"
-          ></lightning-menu-item>
-          <lightning-menu-item
-            label="From Last Forecast (Skip Edited)"
-            value="last_SKIP_EDITED"
+            label="Excel (.xls)"
+            value="xlsx"
+            icon-name="utility:spreadsheet"
           ></lightning-menu-item>
         </lightning-button-menu>
-      </template>
 
-      <!-- Export -->
-      <lightning-button-menu
-        alternative-text="Export"
-        label="Export"
-        icon-name="utility:download"
-        variant="neutral"
-        menu-alignment="bottom-right"
-        onselect={handleExportSelect}
-        class="slds-m-right_x-small"
-        disabled={isLocked}
-      >
-        <lightning-menu-item
-          label="CSV (.csv)"
-          value="csv"
-          icon-name="utility:file"
-        ></lightning-menu-item>
-        <lightning-menu-item
-          label="Excel (.xls)"
-          value="xlsx"
-          icon-name="utility:spreadsheet"
-        ></lightning-menu-item>
-      </lightning-button-menu>
-
-      <!-- Save -->
-      <lightning-button
-        label="Save"
-        variant="brand"
-        onclick={handleSaveClick}
-        class="slds-m-right_x-small"
-        disabled={isSaveDisabled}
-      ></lightning-button>
-
-      <!-- Submit -->
-      <template lwc:if={canSubmit}>
+        <!-- Save -->
         <lightning-button
-          label={submitLabel}
-          variant="success"
-          onclick={handleSubmitClick}
+          label="Save"
+          variant="brand"
+          onclick={handleSaveClick}
           class="slds-m-right_x-small"
-          disabled={isLocked}
+          disabled={isSaveDisabled}
         ></lightning-button>
-      </template>
 
-      <!-- Freeze -->
-      <template lwc:if={canFreeze}>
-        <lightning-button
-          label={freezeLabel}
-          variant="destructive"
-          onclick={handleFreezeClick}
-          disabled={isLocked}
-        ></lightning-button>
-      </template>
+        <!-- Submit -->
+        <template lwc:if={canSubmit}>
+          <lightning-button
+            label={submitLabel}
+            variant="success"
+            onclick={handleSubmitClick}
+            class="slds-m-right_x-small"
+            disabled={isLocked}
+          ></lightning-button>
+        </template>
+
+        <!-- Freeze -->
+        <template lwc:if={canFreeze}>
+          <lightning-button
+            label={freezeLabel}
+            variant="destructive"
+            onclick={handleFreezeClick}
+            disabled={isLocked}
+          ></lightning-button>
+        </template>
+      </div>
     </div>
 
     <!-- ═══ CONFIRMATION DIALOG ═══ -->

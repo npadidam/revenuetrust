@@ -240,6 +240,7 @@ public with sharing class ForecastDataService {
         Hourly_Snapshot_Days__c,
         Hourly_Snapshot_Interval__c,
         Scope_Determination__c,
+        Attainment_Source__c,
         (
           SELECT
             Id,

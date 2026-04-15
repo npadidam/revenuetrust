@@ -20,6 +20,10 @@ export default class RevtForecastRow extends LightningElement {
     return "View forecast for " + (this.record.ownerName || "owner");
   }
 
+  get expandTooltip() {
+    return this.isExpanded ? "Collapse comments" : "Expand comments";
+  }
+
   get expandIcon() {
     return this.isExpanded ? "utility:chevrondown" : "utility:chevronright";
   }
@@ -56,6 +60,10 @@ export default class RevtForecastRow extends LightningElement {
       cls += " submitted-row";
     } else if (this.record.status === "Saved") {
       cls += " saved-row";
+    }
+    // Subtle health band tint
+    if (this.record.healthBand) {
+      cls += " health-" + this.record.healthBand.toLowerCase();
     }
     return cls;
   }

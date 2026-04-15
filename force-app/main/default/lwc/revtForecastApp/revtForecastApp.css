@@ -136,7 +136,28 @@
   background-color: #fafaf9;
   overflow: visible;
   z-index: 5;
-  position: relative;
+  position: sticky;
+  bottom: 0;
+  padding: 8px 12px;
+  box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.08);
+}
+
+.dirty-indicator {
+  color: #8c6d1f;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+}
+
+.attainment-card,
+.tier-card {
+  cursor: default;
+}
+
+.attainment-card:hover,
+.tier-card:hover {
+  box-shadow: none;
 }
 
 .saving-overlay {

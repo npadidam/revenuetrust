@@ -18,7 +18,12 @@ export default class RevtHealthBadge extends LightningElement {
 
   get badgeTitle() {
     const score = this.healthScore != null ? this.healthScore + "/100" : "N/A";
-    return `Health: ${score} (${this.config.label})`;
+    const label = this.config.label;
+    let risk = "";
+    if (this.healthBand === "Red") risk = " — High risk";
+    else if (this.healthBand === "Yellow") risk = " — Monitor closely";
+    else if (this.healthBand === "Green") risk = " — On track";
+    return `Deal Health: ${score} (${label})${risk}`;
   }
 
   get badgeClass() {

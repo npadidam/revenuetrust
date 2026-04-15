@@ -79,19 +79,35 @@ export default class RevtForecastCommentThread extends LightningElement {
     if (!this.newCommentText || !this.newCommentText.trim()) return;
 
     try {
+      const commentText = this.newCommentText.trim();
+      const commentType = this.newCommentType;
+
       const commentId = await saveForecastComment({
         overrideId: this.overrideId,
         periodId: this.periodId,
         recordId: this.recordId,
-        comment: this.newCommentText.trim(),
-        commentType: this.newCommentType
+        comment: commentText,
+        commentType
       });
+
+      // Optimistic UI — add new comment to local list immediately
+      // (avoids cacheable=true stale response from reloading)
+      this.comments = [
+        {
+          commentId,
+          author: "You",
+          level: null,
+          commentDate: new Date().toISOString(),
+          formattedDate: this.formatDate(new Date().toISOString()),
+          comment: commentText,
+          commentType,
+          typeClass: this.getTypeClass(commentType)
+        },
+        ...this.comments
+      ];
 
       this.newCommentText = "";
       this.newCommentType = "Note";
-
-      // Reload comments to show the new one
-      await this.loadComments();
 
       this.dispatchEvent(
         new CustomEvent("commentadded", {
