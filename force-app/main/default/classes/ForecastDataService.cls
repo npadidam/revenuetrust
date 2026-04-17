@@ -11,6 +11,15 @@ public with sharing class ForecastDataService {
   // Cached active config for the transaction
   private static Forecast_Configuration__c cachedConfig;
 
+  // Cached display fields to avoid duplicate queries (set by loadConfig, consumed by buildPipelineFieldList)
+  private static List<Forecast_Display_Field__c> cachedDisplayFields;
+
+  public static void setDisplayFieldCache(
+    List<Forecast_Display_Field__c> fields
+  ) {
+    cachedDisplayFields = fields;
+  }
+
   /**
    * @description Get pipeline records visible to a participant in a scope.
    *              Uses PipelineObjectService for dynamic field resolution.
@@ -109,17 +118,36 @@ public with sharing class ForecastDataService {
     Id periodId,
     Id participantId
   ) {
-    // Resolve the participant's user ID
-    Forecast_Participant__c participant = [
-      SELECT User__c
-      FROM Forecast_Participant__c
-      WHERE Id = :participantId
-      LIMIT 1
-    ];
-    Id participantUserId = participant != null ? participant.User__c : null;
+    // Backward-compatible wrapper: queries the participant to resolve user ID
+    return getOverridesForRecords(recordIds, periodId, participantId, null);
+  }
+
+  /**
+   * @description Overload that accepts a pre-resolved participantUserId to avoid
+   *              a duplicate Forecast_Participant__c query when the caller already
+   *              has the user ID from a prior lookup.
+   */
+  public static Map<Id, Forecast_Override__c> getOverridesForRecords(
+    Set<Id> recordIds,
+    Id periodId,
+    Id participantId,
+    Id participantUserId
+  ) {
+    // Resolve the participant's user ID only if not provided
+    Id resolvedUserId = participantUserId;
+    if (resolvedUserId == null) {
+      // Fallback: query if not provided
+      Forecast_Participant__c participant = [
+        SELECT User__c
+        FROM Forecast_Participant__c
+        WHERE Id = :participantId
+        LIMIT 1
+      ];
+      resolvedUserId = participant != null ? participant.User__c : null;
+    }
 
     Map<Id, Forecast_Override__c> resultMap = new Map<Id, Forecast_Override__c>();
-    if (recordIds == null || recordIds.isEmpty() || participantUserId == null) {
+    if (recordIds == null || recordIds.isEmpty() || resolvedUserId == null) {
       return resultMap;
     }
 
@@ -156,7 +184,7 @@ public with sharing class ForecastDataService {
       WHERE
         Opportunity__c IN :recordIds
         AND Forecast_Period__c = :periodId
-        AND User__c = :participantUserId
+        AND User__c = :resolvedUserId
     ];
 
     for (Forecast_Override__c ov : overrides) {
@@ -484,6 +512,19 @@ public with sharing class ForecastDataService {
   // ── Private helpers ────────────────────────────────────────────────
 
   /**
+   * @description Public wrapper for getUsersInHierarchy. Allows callers
+   *              (e.g. bulk horizon aggregation) to resolve the hierarchy
+   *              without re-querying the participant.
+   */
+  public static Set<Id> getUsersInHierarchyPublic(
+    Id userId,
+    Id participantId,
+    Id periodId
+  ) {
+    return getUsersInHierarchy(userId, participantId, periodId);
+  }
+
+  /**
    * @description Find all user IDs in the reporting hierarchy below a participant.
    *              Used for ownership-based scope to determine pipeline visibility.
    */
@@ -528,7 +569,7 @@ public with sharing class ForecastDataService {
    * @description Build the field list for pipeline queries using PipelineObjectService
    *              mappings plus standard Id field.
    */
-  private static String buildPipelineFieldList() {
+  public static String buildPipelineFieldList() {
     // Leverage PipelineObjectService's field resolution
     Set<String> fields = new Set<String>{
       'Id',
@@ -553,16 +594,24 @@ public with sharing class ForecastDataService {
     if (oppFields.containsKey('type')) {
       fields.add('Type');
     }
-    // Phase D: Add configured display fields from Forecast_Display_Field__c
-    Forecast_Configuration__c activeCfg = getActiveConfig();
-    if (activeCfg != null) {
+    // Phase D: Add configured display fields (use cache if available)
+    List<Forecast_Display_Field__c> displayFields = cachedDisplayFields;
+    if (displayFields == null) {
+      Forecast_Configuration__c activeCfg = getActiveConfig();
+      if (activeCfg != null) {
+        displayFields = [
+          SELECT Field_API_Name__c, Object_API_Name__c
+          FROM Forecast_Display_Field__c
+          WHERE
+            Forecast_Configuration__c = :activeCfg.Id
+            AND Is_Active__c = TRUE
+        ];
+      }
+    }
+    if (displayFields != null) {
       Map<String, Schema.SObjectField> oppFields2 = Opportunity.SObjectType.getDescribe()
         .fields.getMap();
-      for (Forecast_Display_Field__c df : [
-        SELECT Field_API_Name__c, Object_API_Name__c
-        FROM Forecast_Display_Field__c
-        WHERE Forecast_Configuration__c = :activeCfg.Id AND Is_Active__c = TRUE
-      ]) {
+      for (Forecast_Display_Field__c df : displayFields) {
         String srcObj = df.Object_API_Name__c;
         String field = df.Field_API_Name__c;
         if (String.isBlank(field)) {
@@ -613,6 +662,7 @@ public with sharing class ForecastDataService {
   @TestVisible
   private static void resetCache() {
     cachedConfig = null;
+    cachedDisplayFields = null;
   }
 
   /**

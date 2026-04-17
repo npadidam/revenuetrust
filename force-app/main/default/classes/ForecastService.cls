@@ -213,6 +213,9 @@ public with sharing class ForecastService {
       WHERE Forecast_Configuration__c = :config.Id AND Is_Active__c = TRUE
       ORDER BY Sort_Order__c ASC
     ];
+    // Cache display fields so buildPipelineFieldList can reuse them without re-querying
+    ForecastDataService.setDisplayFieldCache(dfs);
+
     for (Forecast_Display_Field__c df : dfs) {
       ForecastController.DisplayFieldDTO dfDto = new ForecastController.DisplayFieldDTO();
       dfDto.fieldId = df.Id;
@@ -433,6 +436,14 @@ public with sharing class ForecastService {
     ForecastController.ForecastRecordSet result = new ForecastController.ForecastRecordSet();
     result.records = new List<ForecastController.ForecastRecordDTO>();
 
+    // Pre-load participant context (used by multiple methods below to avoid duplicate queries)
+    Forecast_Participant__c participant = [
+      SELECT Id, User__c, Hierarchy_Level__c, Scope_Id__c
+      FROM Forecast_Participant__c
+      WHERE Id = :request.participantId
+      LIMIT 1
+    ];
+
     // 1. Query pipeline records in scope via ForecastDataService
     List<SObject> pipelineRecords = ForecastDataService.getPipelineRecordsForScope(
       request.participantId,
@@ -470,7 +481,8 @@ public with sharing class ForecastService {
     Map<Id, Forecast_Override__c> overrideMap = ForecastDataService.getOverridesForRecords(
       recordIds,
       request.periodId,
-      request.participantId
+      request.participantId,
+      participant.User__c
     );
 
     // 3. LEFT JOIN to Deal_Signal__c for health scores
@@ -537,13 +549,7 @@ public with sharing class ForecastService {
     }
 
     // 4. Build ForecastRecordDTO list (merged pipeline + override)
-    // Load participant for hierarchy level context
-    Forecast_Participant__c participant = [
-      SELECT Id, User__c, Hierarchy_Level__c
-      FROM Forecast_Participant__c
-      WHERE Id = :request.participantId
-      LIMIT 1
-    ];
+    // participant already loaded above — reuse cached instance
     Integer currentLevel = participant != null &&
       participant.Hierarchy_Level__c != null
       ? participant.Hierarchy_Level__c.intValue()
@@ -906,7 +912,8 @@ public with sharing class ForecastService {
       allRecords,
       request.participantId,
       request.periodId,
-      request.groupId
+      request.groupId,
+      participant.User__c
     );
 
     // Phase C: Final / Stretch totals + UI labels (added to summary regardless of horizon)
@@ -3356,7 +3363,7 @@ public with sharing class ForecastService {
       summary.categoryCounts = new Map<String, Integer>();
     }
 
-    // Find next N periods after the base period (ordered by start date)
+    // 1. Load base period and next N periods in two queries (instead of recursive queryForecastRecords)
     Forecast_Period__c basePeriod;
     try {
       basePeriod = [
@@ -3373,7 +3380,7 @@ public with sharing class ForecastService {
     }
 
     List<Forecast_Period__c> nextPeriods = [
-      SELECT Id
+      SELECT Id, Start_Date__c, End_Date__c
       FROM Forecast_Period__c
       WHERE Start_Date__c > :basePeriod.Start_Date__c
       ORDER BY Start_Date__c ASC
@@ -3383,43 +3390,87 @@ public with sharing class ForecastService {
       return;
     }
 
+    // 2. Collect all period IDs and compute date range spanning all additional periods
+    Set<Id> allPeriodIds = new Set<Id>();
+    Date earliestStart = null;
+    Date latestEnd = null;
     for (Forecast_Period__c p : nextPeriods) {
-      ForecastController.ForecastQueryRequest req = new ForecastController.ForecastQueryRequest();
-      req.periodId = p.Id;
-      req.participantId = baseRequest.participantId;
-      req.scopeId = baseRequest.scopeId;
-      req.groupId = baseRequest.groupId;
-      // Skip horizon to avoid recursion
-      try {
-        ForecastController.ForecastRecordSet rs = queryForecastRecords(req);
-        if (
-          rs != null &&
-          rs.summary != null &&
-          rs.summary.categoryTotals != null
-        ) {
-          for (String cat : rs.summary.categoryTotals.keySet()) {
-            Decimal v = rs.summary.categoryTotals.get(cat);
-            if (v == null) {
-              continue;
-            }
-            Decimal existing = summary.categoryTotals.containsKey(cat)
-              ? summary.categoryTotals.get(cat)
-              : 0;
-            summary.categoryTotals.put(cat, existing + v);
-            // Counts: also accumulate
-            Integer c = rs.summary.categoryCounts != null &&
-              rs.summary.categoryCounts.containsKey(cat)
-              ? rs.summary.categoryCounts.get(cat)
-              : 0;
-            Integer existingC = summary.categoryCounts.containsKey(cat)
-              ? summary.categoryCounts.get(cat)
-              : 0;
-            summary.categoryCounts.put(cat, existingC + c);
-          }
-        }
-      } catch (Exception ex) {
-        // Skip period on error
+      allPeriodIds.add(p.Id);
+      if (earliestStart == null || p.Start_Date__c < earliestStart) {
+        earliestStart = p.Start_Date__c;
       }
+      if (latestEnd == null || p.End_Date__c > latestEnd) {
+        latestEnd = p.End_Date__c;
+      }
+    }
+    if (earliestStart == null || latestEnd == null) {
+      return;
+    }
+
+    // 3. Get participant user for hierarchy resolution
+    Forecast_Participant__c participant = [
+      SELECT User__c
+      FROM Forecast_Participant__c
+      WHERE Id = :baseRequest.participantId
+      LIMIT 1
+    ];
+    if (participant == null) {
+      return;
+    }
+    Set<Id> userIds = ForecastDataService.getUsersInHierarchyPublic(
+      participant.User__c,
+      baseRequest.participantId,
+      baseRequest.periodId
+    );
+
+    // 4. Query ALL pipeline records across ALL additional periods in ONE query
+    Forecast_Configuration__c config = ForecastDataService.getActiveConfig();
+    String fields = ForecastDataService.buildPipelineFieldList();
+    String pipelineObj = PipelineObjectService.getPipelineObjectName();
+
+    String query =
+      'SELECT ' +
+      fields +
+      ' FROM ' +
+      pipelineObj +
+      ' WHERE OwnerId IN :userIds' +
+      ' AND CloseDate >= :earliestStart AND CloseDate <= :latestEnd' +
+      ' ORDER BY CloseDate ASC';
+
+    if (
+      config != null && String.isNotBlank(config.Pipeline_Record_Type_Filter__c)
+    ) {
+      query =
+        'SELECT ' +
+        fields +
+        ' FROM ' +
+        pipelineObj +
+        ' WHERE OwnerId IN :userIds' +
+        ' AND RecordType.DeveloperName = \'' +
+        String.escapeSingleQuotes(config.Pipeline_Record_Type_Filter__c) +
+        '\'' +
+        ' AND CloseDate >= :earliestStart AND CloseDate <= :latestEnd' +
+        ' ORDER BY CloseDate ASC';
+    }
+
+    List<SObject> allAdditionalRecords = Database.query(query);
+
+    // 5. Aggregate into summary (in-memory, no more recursive queries)
+    for (SObject rec : allAdditionalRecords) {
+      Decimal amount = (Decimal) rec.get('Amount');
+      if (amount == null) {
+        amount = 0;
+      }
+      // Add to total pipeline — for un-overridden records in additional periods
+      // we bucket into 'Pipeline' for coverage calculation
+      Decimal existing = summary.categoryTotals.containsKey('Pipeline')
+        ? summary.categoryTotals.get('Pipeline')
+        : 0;
+      summary.categoryTotals.put('Pipeline', existing + amount);
+      Integer cnt = summary.categoryCounts.containsKey('Pipeline')
+        ? summary.categoryCounts.get('Pipeline')
+        : 0;
+      summary.categoryCounts.put('Pipeline', cnt + 1);
     }
 
     // Recompute Final / Stretch from the now-aggregated category totals
@@ -3729,18 +3780,27 @@ public with sharing class ForecastService {
     Id participantId,
     Id periodId
   ) {
-    return computeSummaryFromRecords(records, participantId, periodId, null);
+    return computeSummaryFromRecords(
+      records,
+      participantId,
+      periodId,
+      null,
+      null
+    );
   }
 
   /**
    * @description Phase B: group-aware overload. Plumbs groupId through to
    *              loadAttainmentData() for per-group quota resolution.
+   *              Accepts optional participantUserId to avoid a duplicate
+   *              Forecast_Participant__c query when the caller already has the user ID.
    */
   private static ForecastController.ForecastSummaryDTO computeSummaryFromRecords(
     List<ForecastController.ForecastRecordDTO> records,
     Id participantId,
     Id periodId,
-    Id groupId
+    Id groupId,
+    Id participantUserId
   ) {
     ForecastController.ForecastSummaryDTO summary = new ForecastController.ForecastSummaryDTO();
     summary.categoryTotals = new Map<String, Decimal>();
@@ -3773,16 +3833,23 @@ public with sharing class ForecastService {
 
     // Load attainment
     try {
-      Forecast_Participant__c participant = [
-        SELECT User__c
-        FROM Forecast_Participant__c
-        WHERE Id = :participantId
-        LIMIT 1
-      ];
-      if (participant != null) {
+      // Resolve participant user ID: use passed value if available, otherwise query
+      Id resolvedUserId = participantUserId;
+      if (resolvedUserId == null) {
+        Forecast_Participant__c summaryParticipant = [
+          SELECT User__c
+          FROM Forecast_Participant__c
+          WHERE Id = :participantId
+          LIMIT 1
+        ];
+        resolvedUserId = summaryParticipant != null
+          ? summaryParticipant.User__c
+          : null;
+      }
+      if (resolvedUserId != null) {
         // Phase B: group-aware quota resolution (group-specific wins, then config-wide)
         AttainmentData attData = loadAttainmentData(
-          participant.User__c,
+          resolvedUserId,
           periodId,
           groupId
         );
