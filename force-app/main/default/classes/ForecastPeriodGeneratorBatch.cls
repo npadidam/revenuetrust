@@ -34,7 +34,7 @@ public class ForecastPeriodGeneratorBatch implements Schedulable {
       : 'Monthly';
 
     // 2. Close past periods: End_Date < today and Status = 'Open' -> 'Closed'
-    closePastPeriods();
+    ForecastPeriodService.closePastPeriods();
 
     // 3. Count future periods (Status = 'Scheduled')
     Integer existingFutureCount = [
@@ -46,7 +46,12 @@ public class ForecastPeriodGeneratorBatch implements Schedulable {
     // 4. Create new periods if needed
     if (existingFutureCount < futurePeriods) {
       Integer toCreate = futurePeriods - existingFutureCount;
-      createFuturePeriods(toCreate, periodType, config.Id);
+      ForecastPeriodService.createFuturePeriods(
+        toCreate,
+        periodType,
+        config.Id,
+        null
+      );
     }
   }
 

@@ -9,6 +9,7 @@
     <navType>Standard</navType>
     <tabs>standard-home</tabs>
     <tabs>REVT__REVT_Forecast</tabs>
+    <tabs>REVT__REVT_Admin</tabs>
     <tabs>standard-Opportunity</tabs>
     <tabs>standard-Account</tabs>
     <tabs>standard-report</tabs>

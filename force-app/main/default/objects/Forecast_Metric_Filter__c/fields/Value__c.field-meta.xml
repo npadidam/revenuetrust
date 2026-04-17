@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Value__c</fullName>
+    <label>Value</label>
+    <description
+  >Serialized per the contract: scalar values stored as stringified API values; multi-value operators (IN/NOT IN/INCLUDES/EXCLUDES) store JSON array of API values; date literals stored as canonical tokens (TODAY, LAST_N_DAYS:N); booleans as "true"/"false"; numbers as plain string numerics; picklists always store API names (never labels).</description>
+    <type>LongTextArea</type>
+    <length>1000</length>
+    <visibleLines>3</visibleLines>
+</CustomField>

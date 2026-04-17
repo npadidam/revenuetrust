@@ -25,44 +25,12 @@
       </a>
     </div>
 
-    <!-- Owner -->
-    <div class="gcol col-owner">
-      <button
-        class="slds-button slds-button_reset owner-link"
-        onclick={handleOwnerClick}
-        title={record.ownerName}
-        aria-label={ownerAriaLabel}
-      >
-        <span class="slds-truncate">{record.ownerName}</span>
-      </button>
-    </div>
-
-    <!-- Stage -->
-    <div class="gcol col-stage">
-      <span class="slds-truncate">{record.stage}</span>
-    </div>
-
-    <!-- Close Date -->
-    <div class="gcol col-date">
-      <lightning-formatted-date-time
-        value={record.closeDate}
-        year="numeric"
-        month="short"
-        day="2-digit"
-      ></lightning-formatted-date-time>
-    </div>
-
-    <!-- CRM Amount -->
-    <div class="gcol col-amount">
-      <lightning-formatted-number
-        value={record.crmAmount}
-        format-style="currency"
-        currency-code="USD"
-        minimum-fraction-digits="0"
-        maximum-fraction-digits="0"
-      >
-      </lightning-formatted-number>
-    </div>
+    <!-- Phase D: Dynamic display field cells -->
+    <template for:each={mainGridDisplayFields} for:item="df">
+      <div key={df.key} class="gcol">
+        <span title={df.value}>{df.value}</span>
+      </div>
+    </template>
 
     <!-- Health Badge -->
     <template lwc:if={showHealthBadge}>
@@ -235,6 +203,27 @@
   <template lwc:if={isExpanded}>
     <div class="detail-row slds-p-around_small" data-row-id={record.recordId}>
       <div class="detail-content">
+        <!-- Phase D: Expanded display fields -->
+        <template if:true={expandedDetailFields.length}>
+          <div
+            class="slds-grid slds-wrap slds-gutters_xx-small slds-m-bottom_small"
+          >
+            <template for:each={expandedDetailFields} for:item="edf">
+              <div
+                key={edf.key}
+                class="slds-col slds-size_1-of-4 slds-p-bottom_xx-small"
+              >
+                <p
+                  class="slds-text-title_caps slds-text-color_weak"
+                  style="font-size: 0.6rem"
+                >
+                  {edf.label}
+                </p>
+                <p class="slds-text-body_small">{edf.value}</p>
+              </div>
+            </template>
+          </div>
+        </template>
         <c-revt-forecast-comment-thread
           record-id={record.recordId}
           override-id={record.overrideId}

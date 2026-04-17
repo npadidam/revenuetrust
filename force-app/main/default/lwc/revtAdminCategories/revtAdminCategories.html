@@ -1,0 +1,186 @@
+<template>
+  <lightning-card title="Forecast Categories" icon-name="standard:category">
+    <lightning-button
+      slot="actions"
+      label="+ Add Category"
+      variant="neutral"
+      icon-name="utility:add"
+      onclick={handleAddCategory}
+    ></lightning-button>
+    <lightning-button
+      slot="actions"
+      label="Save All"
+      variant="brand"
+      onclick={handleSaveAll}
+      disabled={isSaving}
+      class="slds-m-left_x-small"
+    ></lightning-button>
+
+    <div class="slds-p-around_medium">
+      <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading"></lightning-spinner>
+      </template>
+      <template if:false={isLoading}>
+        <!-- Column headers with tooltips -->
+        <div
+          class="slds-grid slds-gutters_xx-small slds-text-title_caps slds-text-color_weak slds-m-bottom_xx-small"
+        >
+          <div style="width: 24px"></div>
+          <div
+            class="slds-col slds-size_2-of-12"
+            title="Display name shown in the forecast grid and category cards"
+          >
+            Label
+          </div>
+          <div
+            class="slds-col slds-size_2-of-12"
+            title="Unique identifier used in API calls and override records"
+          >
+            API Name
+          </div>
+          <div
+            class="slds-col slds-size_1-of-12"
+            title="Color used for the category card and bar in the forecast grid"
+          >
+            Color
+          </div>
+          <div
+            class="slds-col slds-size_1-of-12"
+            title="Include in Final Forecast total (conservative estimate)"
+          >
+            Final
+          </div>
+          <div
+            class="slds-col slds-size_1-of-12"
+            title="Include in Stretch Forecast total (optimistic estimate, typically more inclusive than Final)"
+          >
+            Stretch
+          </div>
+          <div
+            class="slds-col slds-size_1-of-12"
+            title="Terminal categories (Won/Lost) represent closed deals and cannot be changed by users"
+          >
+            Terminal
+          </div>
+          <div
+            class="slds-col slds-size_1-of-12"
+            title="Display order in the category card row (1 = leftmost)"
+          >
+            Order
+          </div>
+          <div
+            class="slds-col slds-size_1-of-12"
+            title="Whether this category is visible in the forecast grid"
+          >
+            Active
+          </div>
+          <div class="slds-col slds-size_2-of-12"></div>
+        </div>
+
+        <template for:each={categories} for:item="cat">
+          <div
+            key={cat.Id}
+            class="slds-grid slds-gutters_xx-small slds-m-bottom_xx-small slds-p-vertical_xx-small cat-row"
+          >
+            <div
+              style="width: 24px; border-radius: 4px"
+              class={cat._colorStyle}
+            ></div>
+            <div class="slds-col slds-size_2-of-12">
+              <lightning-input
+                label="Label"
+                variant="label-hidden"
+                value={cat._label}
+                data-id={cat.Id}
+                data-field="label"
+                onchange={handleCatFieldChange}
+              ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_2-of-12">
+              <lightning-input
+                label="API Name"
+                variant="label-hidden"
+                value={cat._apiName}
+                data-id={cat.Id}
+                data-field="apiName"
+                onchange={handleCatFieldChange}
+              ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-12">
+              <lightning-input
+                type="color"
+                label="Color"
+                variant="label-hidden"
+                value={cat._color}
+                data-id={cat.Id}
+                data-field="color"
+                onchange={handleCatFieldChange}
+              ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-12">
+              <lightning-input
+                type="checkbox"
+                label="Final"
+                variant="label-hidden"
+                checked={cat._countsTowardTarget}
+                data-id={cat.Id}
+                data-field="countsTowardTarget"
+                onchange={handleCatCheckChange}
+              ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-12">
+              <lightning-input
+                type="checkbox"
+                label="Stretch"
+                variant="label-hidden"
+                checked={cat._countsTowardStretch}
+                data-id={cat.Id}
+                data-field="countsTowardStretch"
+                onchange={handleCatCheckChange}
+              ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-12">
+              <lightning-input
+                type="checkbox"
+                label="Terminal"
+                variant="label-hidden"
+                checked={cat._isTerminal}
+                data-id={cat.Id}
+                data-field="isTerminal"
+                onchange={handleCatCheckChange}
+              ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-12">
+              <lightning-input
+                type="number"
+                label="Order"
+                variant="label-hidden"
+                value={cat._sortOrder}
+                data-id={cat.Id}
+                data-field="sortOrder"
+                onchange={handleCatFieldChange}
+                min="1"
+              ></lightning-input>
+            </div>
+            <div class="slds-col slds-size_1-of-12">
+              <lightning-icon
+                icon-name={cat._activeIcon}
+                size="x-small"
+                title={cat._activeLabel}
+              ></lightning-icon>
+            </div>
+            <div class="slds-col slds-size_2-of-12 slds-text-align_right">
+              <lightning-button-icon
+                icon-name="utility:delete"
+                variant="bare"
+                alternative-text="Deactivate"
+                data-id={cat.Id}
+                onclick={handleRemoveCategory}
+              ></lightning-button-icon>
+            </div>
+          </div>
+        </template>
+      </template>
+    </div>
+  </lightning-card>
+</template>

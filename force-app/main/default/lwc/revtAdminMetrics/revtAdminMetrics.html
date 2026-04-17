@@ -1,0 +1,169 @@
+<template>
+  <lightning-card title="Forecast Metrics" icon-name="standard:metrics">
+    <lightning-button
+      slot="actions"
+      label="+ Add Metric"
+      variant="neutral"
+      icon-name="utility:add"
+      onclick={handleAddMetric}
+    ></lightning-button>
+    <lightning-button
+      slot="actions"
+      label="Save All"
+      variant="brand"
+      onclick={handleSaveAll}
+      disabled={isSaving}
+      class="slds-m-left_x-small"
+    ></lightning-button>
+
+    <div class="slds-p-around_medium">
+      <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+        Metrics define the values your team forecasts. Each metric column
+        participates in category rollups, Final/Stretch totals, and attainment
+        calculations.
+      </p>
+      <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading"></lightning-spinner>
+      </template>
+      <template if:false={isLoading}>
+        <template for:each={metrics} for:item="m">
+          <div
+            key={m.Id}
+            class="slds-box slds-m-bottom_small slds-p-around_small"
+          >
+            <!-- Row 1: Name, Type, Flags, Delete -->
+            <div
+              class="slds-grid slds-gutters_small slds-grid_vertical-align-end"
+            >
+              <div class="slds-col slds-size_4-of-12">
+                <lightning-input
+                  label="Name"
+                  value={m._name}
+                  data-id={m.Id}
+                  data-field="name"
+                  onchange={handleFieldChange}
+                  field-level-help="Column header name in the forecast grid."
+                ></lightning-input>
+              </div>
+              <div class="slds-col slds-size_2-of-12">
+                <lightning-combobox
+                  label="Type"
+                  value={m._type}
+                  options={metricTypeOptions}
+                  data-id={m.Id}
+                  data-field="type"
+                  onchange={handleFieldChange}
+                  field-level-help="Currency ($), Number (#), or Percentage (%)."
+                ></lightning-combobox>
+              </div>
+              <div class="slds-col slds-size_2-of-12">
+                <lightning-combobox
+                  label="Aggregation"
+                  value={m._aggregation}
+                  options={aggregationOptions}
+                  data-id={m.Id}
+                  data-field="aggregation"
+                  onchange={handleFieldChange}
+                  field-level-help="How child object values are combined: Sum, Average, Count, Max, Min."
+                ></lightning-combobox>
+              </div>
+              <div class="slds-col slds-size_1-of-12">
+                <lightning-input
+                  type="number"
+                  label="Order"
+                  value={m._sortOrder}
+                  data-id={m.Id}
+                  data-field="sortOrder"
+                  onchange={handleFieldChange}
+                  min="1"
+                  field-level-help="Column order (1 = first)."
+                ></lightning-input>
+              </div>
+              <div class="slds-col slds-size_3-of-12 slds-text-align_right">
+                <lightning-input
+                  type="checkbox"
+                  label="Primary"
+                  checked={m._isPrimary}
+                  data-id={m.Id}
+                  data-field="isPrimary"
+                  onchange={handleCheckChange}
+                  field-level-help="Drives attainment. Only one can be primary."
+                  class="slds-m-right_small"
+                ></lightning-input>
+                <lightning-input
+                  type="checkbox"
+                  label="User Editable"
+                  checked={m._isEditable}
+                  data-id={m.Id}
+                  data-field="isEditable"
+                  onchange={handleCheckChange}
+                  field-level-help="When checked, users can override this metric's value. When unchecked, shows CRM data read-only. Unlike Display Fields, metrics always participate in category rollups and attainment."
+                  class="slds-m-right_small"
+                ></lightning-input>
+                <lightning-combobox
+                  label="Group"
+                  value={m._groupId}
+                  options={groupOptions}
+                  data-id={m.Id}
+                  data-field="groupId"
+                  onchange={handleFieldChange}
+                  variant="label-hidden"
+                  field-level-help="Assign this metric to All Groups (config-wide) or a specific forecast group."
+                  class="slds-m-right_small"
+                ></lightning-combobox>
+                <template if:false={m._isPrimary}>
+                  <lightning-button-icon
+                    icon-name="utility:delete"
+                    variant="bare"
+                    alternative-text="Remove"
+                    title="Remove metric"
+                    data-id={m.Id}
+                    onclick={handleRemoveMetric}
+                  ></lightning-button-icon>
+                </template>
+              </div>
+            </div>
+
+            <!-- Row 2: Source Object + Source Field -->
+            <div class="slds-grid slds-gutters_small slds-m-top_small">
+              <div class="slds-col slds-size_1-of-2">
+                <c-revt-multi-select
+                  label="Source Object"
+                  value={m._sourceObject}
+                  options={sourceObjectOptions}
+                  data-id={m.Id}
+                  data-field="sourceObject"
+                  onchange={handleFieldChange}
+                  placeholder="Search objects..."
+                  single-select
+                  field-level-help="Object to pull this metric from. Opportunity for standard Amount, or a child object for line-item rollups."
+                ></c-revt-multi-select>
+              </div>
+              <div class="slds-col slds-size_1-of-2">
+                <c-revt-multi-select
+                  label="Source Field"
+                  value={m._sourceField}
+                  options={m._fieldOptions}
+                  data-id={m.Id}
+                  data-field="sourceField"
+                  onchange={handleFieldChange}
+                  placeholder="Search fields..."
+                  single-select
+                  field-level-help="Numeric/currency field on the Source Object."
+                ></c-revt-multi-select>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template if:false={metrics.length}>
+          <div
+            class="slds-text-align_center slds-p-around_large slds-text-color_weak"
+          >
+            No metrics configured.
+          </div>
+        </template>
+      </template>
+    </div>
+  </lightning-card>
+</template>

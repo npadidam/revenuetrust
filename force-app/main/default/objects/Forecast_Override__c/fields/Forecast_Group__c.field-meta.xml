@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Forecast_Group__c</fullName>
+    <label>Forecast Group</label>
+    <description
+  >The Forecast Group this override belongs to. Required after Phase B \u2014 every override is scoped to a concrete group (the auto-created "All Opportunities" group is used when there's only one group).</description>
+    <referenceTo>Forecast_Group__c</referenceTo>
+    <relationshipName>Forecast_Overrides</relationshipName>
+    <relationshipLabel>Forecast Overrides</relationshipLabel>
+    <type>Lookup</type>
+    <required>false</required>
+    <deleteConstraint>Restrict</deleteConstraint>
+</CustomField>

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Forecast Group</label>
+    <pluralLabel>Forecast Groups</pluralLabel>
+    <nameField>
+        <label>Group Name</label>
+        <type>Text</type>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>true</enableSearch>
+    <description
+  >A sub-config within a Forecast Configuration that defines membership criteria (RecordType OR custom field on Opp/child object), display order, and optional terminal stage overrides. Each config has 1+ groups. Most configs have a single auto-created "All Opportunities" group.</description>
+</CustomObject>

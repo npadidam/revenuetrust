@@ -1,7 +1,5 @@
 :host {
-  position: relative;
   display: block;
-  contain: layout;
 
   /* RevenueTrust Design Tokens — §9 */
   --revt-status-new: #b0b0b0;
@@ -21,6 +19,23 @@
   --revt-row-frozen-bg: #f3f3f3;
   --revt-cell-dirty-border: #f2cf00;
   --revt-dedup-info: #0176d3;
+}
+
+.forecast-container {
+  position: relative;
+  overflow: hidden;
+}
+
+.sticky-top {
+  background-color: white;
+}
+
+/* Grid scroll area — use calc(100vh - fixed overhead) for precise fit.
+   Overhead = SF chrome(~110px) + page header(~60px) + toolbar row(~40px) +
+   filters(~60px) + category cards(~55px) + footer(~50px) = ~375px */
+.grid-scroll-area {
+  height: calc(100vh - 480px);
+  min-height: 150px;
 }
 
 .toolbar-bar {
@@ -136,8 +151,6 @@
   background-color: #fafaf9;
   overflow: visible;
   z-index: 5;
-  position: sticky;
-  bottom: 0;
   padding: 8px 12px;
   box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.08);
 }
@@ -151,13 +164,61 @@
 }
 
 .attainment-card,
-.tier-card {
+.tier-card,
+.final-card,
+.stretch-card {
   cursor: default;
 }
 
 .attainment-card:hover,
-.tier-card:hover {
+.tier-card:hover,
+.final-card:hover,
+.stretch-card:hover {
   box-shadow: none;
+}
+
+/* Phase C: Final / Stretch summary cards */
+.final-card {
+  border-left: 4px solid #04844b;
+}
+
+.stretch-card {
+  border-left: 4px solid #1589ee;
+}
+
+/* Summary tiles in toolbar */
+.summary-tile {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  background-color: #f4f6f9;
+  color: #181818;
+  border: 1px solid #c9c9c9;
+}
+
+.summary-tile-final {
+  border-left: 4px solid #0176d3;
+}
+
+.summary-tile-stretch {
+  border-left: 4px solid #9050e9;
+}
+
+.tile-label {
+  color: #706e6b;
+  font-weight: 400;
+}
+
+.tile-amount {
+  font-weight: 700;
+}
+
+.admin-gear {
+  margin-left: 4px;
 }
 
 .saving-overlay {

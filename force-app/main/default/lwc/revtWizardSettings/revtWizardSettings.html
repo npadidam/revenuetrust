@@ -1,0 +1,249 @@
+<template>
+  <!-- Step 7: Period Configuration -->
+  <template if:true={isStep7}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+      Period Configuration
+    </h2>
+    <div class="slds-grid slds-gutters_small slds-wrap">
+      <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+        <lightning-combobox
+          label="Period Type"
+          value={wizardData.periodType}
+          options={periodTypeOptions}
+          onchange={handlePeriodTypeChange}
+        ></lightning-combobox>
+      </div>
+      <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+        <lightning-combobox
+          label="Fiscal Year Start Month"
+          value={fiscalMonthValue}
+          options={monthOptions}
+          onchange={handleFiscalMonthChange}
+        ></lightning-combobox>
+      </div>
+      <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+        <lightning-input
+          type="number"
+          label="Past Periods Visible"
+          value={wizardData.pastPeriodsVisible}
+          min="0"
+          max="12"
+          onchange={handlePastPeriodsChange}
+          field-level-help="How many closed periods appear in the period picker so users can review past forecasts."
+        ></lightning-input>
+      </div>
+      <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+        <lightning-input
+          type="number"
+          label="Future Periods Visible"
+          value={wizardData.futurePeriods}
+          min="1"
+          max="12"
+          onchange={handleFuturePeriodsChange}
+          field-level-help="How many open/future periods appear in the period picker."
+        ></lightning-input>
+      </div>
+    </div>
+
+    <!-- Phase C: Default Horizon -->
+    <h3 class="slds-text-title_caps slds-m-top_medium slds-m-bottom_x-small">
+      Default Forecast Horizon
+    </h3>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
+      Sets how many periods the forecast tab loads by default. Users can change
+      this at runtime from the toolbar. Multi-period horizons are read-only
+      \u2014 use the current period to make edits.
+    </p>
+    <div class="slds-grid slds-gutters_small">
+      <div class="slds-col slds-size_1-of-2">
+        <lightning-combobox
+          label="Default Horizon"
+          value={wizardData.defaultHorizon}
+          options={horizonOptions}
+          onchange={handleDefaultHorizonChange}
+        ></lightning-combobox>
+      </div>
+      <template if:true={isCustomHorizon}>
+        <div class="slds-col slds-size_1-of-2">
+          <lightning-input
+            type="number"
+            label="Custom Periods Count"
+            value={wizardData.customHorizonPeriods}
+            min="1"
+            max="24"
+            onchange={handleCustomHorizonPeriodsChange}
+            field-level-help="Number of periods to load for Custom horizon."
+          ></lightning-input>
+        </div>
+      </template>
+    </div>
+
+    <!-- Phase D: Forecast Cadence -->
+    <h3 class="slds-text-title_caps slds-m-top_medium slds-m-bottom_x-small">
+      Forecast Cadence
+    </h3>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
+      How often does your team submit their forecast? This drives snapshot
+      timing and submission reminders.
+    </p>
+    <div class="slds-grid slds-gutters_small">
+      <div class="slds-col slds-size_1-of-2">
+        <lightning-combobox
+          label="Cadence"
+          value={wizardData.forecastCadence}
+          options={cadenceOptions}
+          onchange={handleCadenceChange}
+          field-level-help="How frequently the team submits their forecast."
+        ></lightning-combobox>
+      </div>
+      <template if:true={isWeeklyOrBiWeekly}>
+        <div class="slds-col slds-size_1-of-2">
+          <lightning-combobox
+            label="Submission Deadline"
+            value={wizardData.submissionDeadlineDay}
+            options={dayOfWeekOptions}
+            onchange={handleDeadlineDayChange}
+            field-level-help={deadlineHelpText}
+          ></lightning-combobox>
+        </div>
+      </template>
+      <template if:true={isMonthlyOrQuarterly}>
+        <div class="slds-col slds-size_1-of-2">
+          <lightning-input
+            type="number"
+            label="Submission Deadline Day"
+            value={wizardData.submissionDeadlineDay}
+            min="1"
+            max={deadlineMaxDay}
+            onchange={handleDeadlineNumberChange}
+            field-level-help={deadlineHelpText}
+          ></lightning-input>
+        </div>
+      </template>
+    </div>
+    <div class="slds-m-top_small">
+      <lightning-input
+        type="checkbox"
+        label="Auto-freeze forecasts that aren't submitted by the deadline"
+        checked={wizardData.autoFreezeOnDeadline}
+        onchange={handleAutoFreezeChange}
+        field-level-help="When checked, unsubmitted forecasts are automatically frozen at 23:59:59 in your org's timezone on the deadline day."
+      ></lightning-input>
+    </div>
+  </template>
+
+  <!-- Step 8: Currency Configuration -->
+  <template if:true={isStep8}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+      Currency Configuration
+    </h2>
+
+    <!-- Phase A: read-only display for single-currency orgs -->
+    <template if:true={isSingleCurrencyOrg}>
+      <div class="slds-box slds-theme_shade">
+        <h3 class="slds-text-title_bold slds-m-bottom_x-small">
+          Single Currency: {currencyDisplayValue}
+        </h3>
+        <p class="slds-text-body_small slds-text-color_weak">
+          Multi-currency is not enabled in this Salesforce org. RevenueTrust
+          will use the org's default currency.
+        </p>
+        <p
+          class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small"
+        >
+          To enable additional currencies, contact your Salesforce
+          administrator.
+        </p>
+      </div>
+    </template>
+
+    <!-- Editable controls for multi-currency orgs -->
+    <template if:false={isSingleCurrencyOrg}>
+      <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+        Your org has multi-currency enabled. How should RevenueTrust handle
+        currencies?
+      </p>
+      <lightning-radio-group
+        label="Currency Mode"
+        options={currencyModeOptions}
+        value={wizardData.currencyMode}
+        type="radio"
+        onchange={handleCurrencyModeChange}
+      ></lightning-radio-group>
+      <div class="slds-m-top_small">
+        <lightning-input
+          label="Corporate Currency (ISO Code)"
+          value={wizardData.corporateCurrency}
+          placeholder="USD"
+          onchange={handleCorporateCurrencyChange}
+        ></lightning-input>
+      </div>
+    </template>
+  </template>
+
+  <!-- Step 9: Hierarchy Level Labels (Phase C) -->
+  <template if:true={isStep9}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_x-small">
+      Hierarchy Level Labels
+    </h2>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
+      Source: <strong>{hierarchySourceLabel}</strong>
+    </p>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+      Each level can pull its label from the hierarchy automatically, or you can
+      override it. Auto-derived labels stay in sync when you click "Refresh from
+      Hierarchy" in the Admin Console.
+    </p>
+
+    <!-- Column headers -->
+    <div
+      class="slds-grid slds-gutters_small slds-text-title_caps slds-text-color_weak slds-m-bottom_xx-small"
+    >
+      <div class="slds-col slds-size_2-of-12">Level</div>
+      <div class="slds-col slds-size_3-of-12">Auto-derive</div>
+      <div class="slds-col slds-size_7-of-12">Label / Override</div>
+    </div>
+
+    <template for:each={levelRows} for:item="lvl">
+      <div
+        key={lvl.level}
+        class="slds-grid slds-gutters_small slds-m-bottom_x-small slds-p-vertical_xx-small level-row"
+      >
+        <div class="slds-col slds-size_2-of-12 slds-align-middle">
+          <span class="slds-badge">{lvl._badge}</span>
+        </div>
+        <div class="slds-col slds-size_3-of-12 slds-align-middle">
+          <lightning-input
+            type="checkbox"
+            label="Auto"
+            variant="label-hidden"
+            checked={lvl._autoDerive}
+            data-idx={lvl._idx}
+            onchange={handleLevelAutoToggle}
+          ></lightning-input>
+          <template if:true={lvl._autoDerive}>
+            <p class="slds-text-body_small slds-text-color_weak">
+              {lvl._suggestedDisplay}
+            </p>
+          </template>
+        </div>
+        <div class="slds-col slds-size_7-of-12">
+          <lightning-input
+            label="Label"
+            value={lvl.label}
+            variant="label-hidden"
+            data-idx={lvl._idx}
+            onchange={handleLevelLabelChange}
+            disabled={lvl._overrideDisabled}
+            placeholder="e.g. Sales Rep, Manager"
+          ></lightning-input>
+        </div>
+      </div>
+    </template>
+
+    <p class="slds-text-body_small slds-text-color_weak slds-m-top_small">
+      Tip: Turn off Auto on a level to set a permanent override that won't
+      change on refresh.
+    </p>
+  </template>
+</template>

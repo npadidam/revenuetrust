@@ -31,6 +31,75 @@ export default class RevtForecastGrid extends LightningElement {
       }));
   }
 
+  get displayFieldHeaders() {
+    if (!this.config?.displayFields) return [];
+    return this.config.displayFields
+      .filter(
+        (f) =>
+          f.isActive &&
+          (f.displayLocation === "Main_Grid" || f.displayLocation === "Both")
+      )
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map((f) => {
+        const displayKey =
+          f.objectApiName === "Opportunity"
+            ? f.fieldApiName
+            : f.objectApiName + "." + f.fieldApiName;
+        const sortKey = "df_" + displayKey;
+        return {
+          key: sortKey,
+          label: f.fieldLabel,
+          fieldApiName: displayKey,
+          isSorted: this.sortField === sortKey,
+          sortIconName:
+            this.sortDirection === "ASC"
+              ? "utility:arrowup"
+              : "utility:arrowdown"
+        };
+      });
+  }
+
+  /** Generic: is the given field currently being sorted? */
+  isSortedBy(field) {
+    return this.sortField === field;
+  }
+
+  get sortedMetricHeaders() {
+    return this.metricHeaders.map((mh) => ({
+      ...mh,
+      isSorted: this.sortField === mh.key,
+      sortIconName:
+        this.sortDirection === "ASC" ? "utility:arrowup" : "utility:arrowdown"
+    }));
+  }
+
+  get isSortedByCategory() {
+    return this.sortField === "category";
+  }
+  get isSortedByOverrideClose() {
+    return this.sortField === "closeDateOverride";
+  }
+  get isSortedByStatus() {
+    return this.sortField === "status";
+  }
+
+  get expandedDisplayFields() {
+    if (!this.config?.displayFields) return [];
+    return this.config.displayFields
+      .filter(
+        (f) =>
+          f.isActive &&
+          (f.displayLocation === "Expanded_Detail" ||
+            f.displayLocation === "Both")
+      )
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map((f) => ({
+        key: "df_" + f.fieldApiName,
+        label: f.fieldLabel,
+        fieldApiName: f.fieldApiName
+      }));
+  }
+
   // ── Sorting ──
 
   get sortIcon() {
@@ -84,6 +153,20 @@ export default class RevtForecastGrid extends LightningElement {
   handleSortMetric(event) {
     const field = event.currentTarget.dataset.sortField;
     this.toggleSort(field || "metricValue");
+  }
+
+  handleSortDisplayField(event) {
+    const field = event.currentTarget.dataset.sortField;
+    if (field) {
+      this.toggleSort("df_" + field);
+    }
+  }
+
+  handleSortGeneric(event) {
+    const field = event.currentTarget.dataset.sortField;
+    if (field) {
+      this.toggleSort(field);
+    }
   }
 
   toggleSort(field) {

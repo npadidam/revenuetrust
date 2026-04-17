@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <label>Forecast Metric Filter</label>
+    <pluralLabel>Forecast Metric Filters</pluralLabel>
+    <nameField>
+        <label>Filter Number</label>
+        <type>AutoNumber</type>
+        <displayFormat>FMF-{0000}</displayFormat>
+        <startingNumber>1</startingNumber>
+    </nameField>
+    <deploymentStatus>Deployed</deploymentStatus>
+    <sharingModel>ReadWrite</sharingModel>
+    <enableActivities>false</enableActivities>
+    <enableHistory>true</enableHistory>
+    <enableReports>true</enableReports>
+    <enableSearch>false</enableSearch>
+    <description
+  >Structured filter clause for a Forecast_Metric__c. Replaces freeform Source_Filter__c text. Each clause has Field/Operator/Value/Logical_Operator. Max 5 clauses per metric (enforced by trigger). StructuredFilterBuilder.cls converts these records to safe parameterized SOQL.</description>
+</CustomObject>

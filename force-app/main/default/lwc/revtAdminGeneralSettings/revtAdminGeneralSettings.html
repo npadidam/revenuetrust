@@ -1,0 +1,342 @@
+<template>
+  <lightning-card title="General Settings" icon-name="standard:settings">
+    <lightning-button
+      slot="actions"
+      variant="brand"
+      label="Save Settings"
+      onclick={handleSave}
+      disabled={isSaving}
+    ></lightning-button>
+
+    <div class="slds-p-around_medium">
+      <div class="slds-grid slds-wrap slds-gutters">
+        <!-- ═══ CORE ═══ -->
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-combobox
+            label="Period Type"
+            value={periodType}
+            options={periodTypeOptions}
+            name="periodType"
+            field-level-help="How forecast periods are divided: Monthly, Quarterly, or Annual. Drives period generation and the period picker."
+          ></lightning-combobox>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-input
+            type="number"
+            label="Pagination Size"
+            value={paginationSize}
+            name="paginationSize"
+            min="5"
+            max="200"
+            field-level-help="Number of opportunity rows per page in the forecast grid. Higher values load more data per request."
+          ></lightning-input>
+        </div>
+
+        <!-- Currency -->
+        <template if:true={isMultiCurrencyMode}>
+          <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+            <lightning-combobox
+              label="Currency Mode"
+              value={currencyMode}
+              options={currencyModeOptions}
+              name="currencyMode"
+              field-level-help="How exchange rates are applied. Dated Rates uses DatedConversionRate (rates frozen at submit). Static uses CurrencyType (fixed rates). Dual shows both currencies."
+            ></lightning-combobox>
+          </div>
+          <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+            <lightning-input
+              label="Corporate Currency"
+              value={corporateCurrency}
+              name="corporateCurrency"
+              field-level-help="The ISO code of the org's corporate (reporting) currency. All forecasts roll up to this currency."
+            ></lightning-input>
+          </div>
+        </template>
+        <template if:false={isMultiCurrencyMode}>
+          <div class="slds-col slds-size_1-of-1 slds-p-bottom_small">
+            <p class="slds-text-body_small slds-text-color_weak">
+              <strong>Currency:</strong> {corporateCurrency} (Single Currency
+              mode &mdash; multi-currency not enabled in this org)
+            </p>
+          </div>
+        </template>
+
+        <!-- ═══ ATTAINMENT ═══ -->
+        <div
+          class="slds-col slds-size_1-of-1 slds-p-bottom_small slds-p-top_small"
+        >
+          <h3 class="slds-text-title_caps">Attainment &amp; Actions</h3>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-combobox
+            label="Attainment Source"
+            value={attainmentSource}
+            options={attainmentSourceOptions}
+            name="attainmentSource"
+            field-level-help="Where quota/target and achieved amounts come from. 'Forecast Quota + Live' uses RevenueTrust's own Forecast_Quota__c plus live pipeline data."
+          ></lightning-combobox>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-combobox
+            label="Attainment Layout"
+            value={attainmentLayout}
+            options={attainmentLayoutOptions}
+            name="attainmentLayout"
+            field-level-help="How attainment is displayed: current period only, period + YTD, or expanded multi-period view."
+          ></lightning-combobox>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-input
+            label="Top Level Lock Label"
+            value={topLevelLockLabel}
+            name="topLevelLockLabel"
+            field-level-help="The button label for the top-level freeze action (e.g., 'Freeze', 'Lock', 'Finalize'). This action prevents further edits for a scope."
+          ></lightning-input>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-combobox
+            label="Hierarchy Determination"
+            value={scopeDetermination}
+            options={scopeOptions}
+            name="scopeDetermination"
+            onchange={handleScopeDeterminationChange}
+            field-level-help="How the forecast hierarchy and user scope is determined: Ownership (Role Hierarchy), Territory (Territory Management), or Custom Field (a field on Opportunity or a related object)."
+          ></lightning-combobox>
+        </div>
+        <!-- Custom Field scope: object + field pickers -->
+        <template if:true={isCustomFieldScope}>
+          <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+            <c-revt-multi-select
+              label="Scope Object"
+              value={scopeCustomObject}
+              options={scopeObjectOptions}
+              onchange={handleScopeObjectChange}
+              placeholder="Search objects..."
+              single-select
+              field-level-help="The object holding the field that determines which scope (territory/region) each opportunity belongs to."
+            ></c-revt-multi-select>
+          </div>
+          <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+            <c-revt-multi-select
+              label="Scope Field"
+              value={scopeCustomField}
+              options={scopeFieldOptions}
+              onchange={handleScopeFieldChange}
+              placeholder="Search fields..."
+              single-select
+              field-level-help="The field on the selected object that determines scope assignment."
+            ></c-revt-multi-select>
+          </div>
+        </template>
+
+        <!-- ═══ PIPELINE ═══ -->
+        <div
+          class="slds-col slds-size_1-of-1 slds-p-bottom_small slds-p-top_small"
+        >
+          <h3 class="slds-text-title_caps">Pipeline &amp; Snapshots</h3>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-input
+            type="number"
+            label="Future Periods"
+            value={futurePeriods}
+            name="futurePeriods"
+            min="1"
+            max="12"
+            field-level-help="How many future periods (beyond the current open period) to generate and show in the period picker."
+          ></lightning-input>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <template if:true={hasRecordTypes}>
+            <c-revt-multi-select
+              label="Pipeline Record Type Filter"
+              selected-values={selectedRecordTypes}
+              options={recordTypeOptions}
+              onchange={handleRecordTypeFilterChange}
+              placeholder="All Record Types (no filter)"
+              field-level-help="Only include opportunities with these Record Types in the forecast pipeline. Leave empty to include all Record Types."
+            ></c-revt-multi-select>
+          </template>
+          <template if:false={hasRecordTypes}>
+            <lightning-input
+              label="Pipeline Record Type Filter"
+              value={pipelineRecordTypeFilter}
+              name="pipelineRecordTypeFilter"
+              disabled
+              field-level-help="No Opportunity Record Types found in this org."
+              placeholder="No Record Types available"
+            ></lightning-input>
+          </template>
+        </div>
+        <!-- Hourly Snapshot fields: hidden when cadence is configured (cadence supersedes) -->
+        <template if:false={hasCadence}>
+          <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+            <lightning-input
+              type="number"
+              label="Hourly Snapshot Days"
+              value={hourlySnapshotDays}
+              name="hourlySnapshotDays"
+              min="0"
+              field-level-help="Number of days before period close to start taking hourly pipeline snapshots. Set to 0 to disable. Replaced by Forecast Cadence below."
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+            <lightning-input
+              type="number"
+              label="Hourly Snapshot Interval"
+              value={hourlySnapshotInterval}
+              name="hourlySnapshotInterval"
+              min="1"
+              field-level-help="Hours between each snapshot during the hourly snapshot window."
+            ></lightning-input>
+          </div>
+        </template>
+
+        <!-- ═══ FORECAST CADENCE (Phase D) ═══ -->
+        <div
+          class="slds-col slds-size_1-of-1 slds-p-bottom_small slds-p-top_small"
+        >
+          <h3 class="slds-text-title_caps">Forecast Cadence</h3>
+          <p
+            class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small"
+          >
+            How often does your team submit their forecast? This drives snapshot
+            timing and submission reminders.
+          </p>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-combobox
+            label="Cadence"
+            value={forecastCadence}
+            options={cadenceOptions}
+            name="forecastCadence"
+            onchange={handleCadenceChange}
+            field-level-help="How frequently the team submits their forecast."
+          ></lightning-combobox>
+        </div>
+        <template if:true={isWeeklyOrBiWeekly}>
+          <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+            <lightning-combobox
+              label="Submission Deadline"
+              value={submissionDeadlineDay}
+              options={dayOfWeekOptions}
+              name="submissionDeadlineDay"
+              onchange={handleDeadlineDayChange}
+              field-level-help="Day of week when forecast is due."
+            ></lightning-combobox>
+          </div>
+        </template>
+        <template if:true={isMonthlyOrQuarterly}>
+          <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+            <lightning-input
+              type="number"
+              label="Submission Deadline Day"
+              value={submissionDeadlineDay}
+              name="submissionDeadlineDay"
+              min="1"
+              max={deadlineMaxDay}
+              onchange={handleDeadlineNumberChange}
+              field-level-help="Day of the period when forecast is due."
+            ></lightning-input>
+          </div>
+        </template>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-input
+            type="checkbox"
+            label="Auto-freeze forecasts on deadline"
+            checked={autoFreezeOnDeadline}
+            name="autoFreezeOnDeadline"
+            onchange={handleAutoFreezeChange}
+            field-level-help="When checked, unsubmitted forecasts are automatically frozen at 23:59:59 on the deadline day."
+          ></lightning-input>
+        </div>
+        <template if:true={isBiWeekly}>
+          <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+            <lightning-input
+              type="date"
+              label="Cadence Anchor Date"
+              value={cadenceAnchorDate}
+              name="cadenceAnchorDate"
+              onchange={handleAnchorDateChange}
+              field-level-help="Reference date for bi-weekly cadence alignment. The system counts two-week intervals from this date."
+            ></lightning-input>
+          </div>
+        </template>
+
+        <!-- ═══ PERIOD & HORIZON ═══ -->
+        <div
+          class="slds-col slds-size_1-of-1 slds-p-bottom_small slds-p-top_small"
+        >
+          <h3 class="slds-text-title_caps">Period &amp; Horizon</h3>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-combobox
+            label="Fiscal Year Start Month"
+            value={fiscalYearStartMonth}
+            options={monthOptions}
+            name="fiscalYearStartMonth"
+            field-level-help="The month your fiscal year begins. Used for fiscal year period naming and quarter alignment."
+          ></lightning-combobox>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-input
+            type="number"
+            label="Past Periods Visible"
+            value={pastPeriodsVisible}
+            name="pastPeriodsVisible"
+            min="0"
+            max="12"
+            field-level-help="How many closed past periods appear in the period picker so users can review historical forecasts."
+          ></lightning-input>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-combobox
+            label="Default Horizon"
+            value={defaultHorizon}
+            options={horizonOptions}
+            name="defaultHorizon"
+            field-level-help="The default time range loaded in the forecast tab. Users can change this at runtime. Multi-period horizons are read-only."
+          ></lightning-combobox>
+        </div>
+        <template if:true={isCustomHorizon}>
+          <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+            <lightning-input
+              type="number"
+              label="Custom Horizon Periods"
+              value={customHorizonPeriods}
+              name="customHorizonPeriods"
+              min="1"
+              max="24"
+              field-level-help="When Default Horizon is 'Custom', how many periods to load in the forecast view."
+            ></lightning-input>
+          </div>
+        </template>
+
+        <!-- ═══ FORECAST LABELS ═══ -->
+        <div
+          class="slds-col slds-size_1-of-1 slds-p-bottom_small slds-p-top_small"
+        >
+          <h3 class="slds-text-title_caps">Forecast Labels</h3>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-input
+            label="Final Forecast Label"
+            value={finalForecastLabel}
+            name="finalForecastLabel"
+            placeholder="Final Forecast"
+            field-level-help="Display label for the Final Forecast total card. Sums all categories marked as 'Final' (Counts Toward Target)."
+          ></lightning-input>
+        </div>
+        <div class="slds-col slds-size_1-of-2 slds-p-bottom_small">
+          <lightning-input
+            label="Stretch Forecast Label"
+            value={stretchForecastLabel}
+            name="stretchForecastLabel"
+            placeholder="Stretch Forecast"
+            field-level-help="Display label for the Stretch Forecast total card. Sums all categories marked as 'Stretch' (typically more inclusive than Final)."
+          ></lightning-input>
+        </div>
+      </div>
+    </div>
+  </lightning-card>
+</template>

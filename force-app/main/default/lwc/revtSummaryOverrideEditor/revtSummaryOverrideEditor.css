@@ -1,0 +1,13 @@
+.override-popover {
+  position: absolute;
+  z-index: 9999;
+  min-width: 320px;
+  background: white;
+  border: 1px solid #dddbda;
+  border-radius: 4px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+.delta-text {
+  color: #706e6b;
+  font-style: italic;
+}

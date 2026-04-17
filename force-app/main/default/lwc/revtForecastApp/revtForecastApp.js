@@ -1,5 +1,7 @@
 import { LightningElement, wire, track, api } from "lwc";
+import { NavigationMixin } from "lightning/navigation";
 import { ShowToastEvent } from "lightning/platformShowToastEvent";
+import hasActiveConfig from "@salesforce/apex/ForecastController.hasActiveConfig";
 import getForecastConfig from "@salesforce/apex/ForecastController.getForecastConfig";
 import getParticipantContext from "@salesforce/apex/ForecastController.getParticipantContext";
 import getParticipantContextForUser from "@salesforce/apex/ForecastController.getParticipantContextForUser";
@@ -9,19 +11,61 @@ import submitForecastData from "@salesforce/apex/ForecastController.submitForeca
 import freezeForecastData from "@salesforce/apex/ForecastController.freezeForecastData";
 import copyFromPreviousLevel from "@salesforce/apex/ForecastController.copyFromPreviousLevel";
 import copyFromLastForecast from "@salesforce/apex/ForecastController.copyFromLastForecast";
+import overrideSummaryValue from "@salesforce/apex/ForecastController.overrideSummaryValue";
+import clearSummaryOverride from "@salesforce/apex/ForecastController.clearSummaryOverride";
 import getParticipantIdForUser from "@salesforce/apex/ForecastController.getParticipantIdForUser";
+import getGroupsForActiveConfig from "@salesforce/apex/ForecastController.getGroupsForActiveConfig";
 import {
   chunkArray,
   parseErrorPrefix,
+  sessionStorageGet,
   sessionStorageSet
 } from "c/revtForecastUtils";
 
 const SAVE_CHUNK_SIZE = 50;
 
-export default class RevtForecastApp extends LightningElement {
+// Phase C: Forecast horizon options shown in the toolbar.
+const HORIZON_OPTIONS = [
+  { label: "Current Period", value: "Current_Period" },
+  { label: "Current + Next", value: "Current_Plus_Next" },
+  { label: "Current Quarter", value: "Quarter" },
+  { label: "Current + Next Quarter", value: "Quarter_Plus_Next" },
+  { label: "Fiscal Year", value: "Fiscal_Year" },
+  { label: "Custom", value: "Custom" }
+];
+
+// sessionStorage key for the user's horizon preference, scoped per participant.
+const HORIZON_STORAGE_PREFIX = "revt_horizon_";
+
+export default class RevtForecastApp extends NavigationMixin(LightningElement) {
   @api title = "Forecast";
   @api showInlineEstimator;
   @api showHealthBadge;
+
+  // ── Wizard detection ──
+  showWizard = false;
+  configChecked = false;
+
+  @wire(hasActiveConfig)
+  wiredHasConfig({ data, error }) {
+    if (data !== undefined) {
+      this.showWizard = !data;
+      this.configChecked = true;
+    } else if (error) {
+      // If check fails, assume config exists and show grid
+      this.configChecked = true;
+      this.showWizard = false;
+    }
+  }
+
+  get showForecastGrid() {
+    return this.configChecked && !this.showWizard;
+  }
+
+  handleWizardComplete() {
+    // Wizard finished activation — switch to forecast grid
+    this.showWizard = false;
+  }
 
   // ── Config (cacheable wire) ──
   config;
@@ -30,12 +74,21 @@ export default class RevtForecastApp extends LightningElement {
     if (data) {
       this.config = data;
       this.pageSize = data.paginationSize || 40;
+      // Phase C: initialize horizon from sessionStorage (if present) or config default
+      if (!this.selectedHorizon) {
+        const stored = sessionStorageGet(this._horizonStorageKey());
+        this.selectedHorizon =
+          stored || data.defaultHorizon || "Current_Period";
+      }
       if (data.currentPeriod && !this.selectedPeriodId) {
         this.selectedPeriodId = data.currentPeriod.periodId;
         this.loadContext();
       }
     } else if (error) {
-      this.showError("Failed to load forecast configuration.");
+      // Only show error if we're supposed to show the grid
+      if (!this.showWizard) {
+        this.showError("Failed to load forecast configuration.");
+      }
     }
   }
 
@@ -50,10 +103,146 @@ export default class RevtForecastApp extends LightningElement {
   // ── Selection state ──
   selectedPeriodId;
   selectedScopeId;
+  selectedGroupId; // Phase B
+  selectedHorizon; // Phase C
   currentPage = 1;
   pageSize = 40;
   isClientSideFiltering = false;
   isLocalCurrency = false;
+
+  // Phase C: when summary.readOnly==true (multi-period horizon), edits/save/submit/freeze are hidden
+  isHorizonReadOnly = false;
+
+  // ── Phase B: Forecast Groups ──
+  @track groups = [];
+
+  @wire(getGroupsForActiveConfig)
+  wiredGroups({ data, error }) {
+    if (data) {
+      this.groups = data;
+      // Default to "All Groups" (empty string = no group filter)
+      if (this.selectedGroupId === undefined || this.selectedGroupId === null) {
+        this.selectedGroupId = "";
+      }
+    } else if (error) {
+      this.groups = [];
+    }
+  }
+
+  get groupOptions() {
+    const opts = [{ label: "All Groups", value: "" }];
+    for (const g of this.groups || []) {
+      opts.push({ label: g.groupName, value: g.groupId });
+    }
+    return opts;
+  }
+
+  get showGroupPicker() {
+    return (this.groups || []).length >= 1;
+  }
+
+  handleGroupChange(event) {
+    this.selectedGroupId = event.detail.value;
+    this.currentPage = 1;
+    this.loadRecords();
+  }
+
+  // ── Phase C: Horizon picker ──
+
+  get horizonOptions() {
+    return HORIZON_OPTIONS;
+  }
+
+  get showHorizonPicker() {
+    // Show whenever config is loaded — single horizon orgs still see the option
+    return !!this.config;
+  }
+
+  /**
+   * sessionStorage key for the user's horizon preference, scoped per participant
+   * so different drill-in views (or different participants on the same browser)
+   * don't share state.
+   */
+  _horizonStorageKey() {
+    const pid = this.currentParticipantId || "anon";
+    return HORIZON_STORAGE_PREFIX + pid;
+  }
+
+  handleHorizonChange(event) {
+    const newVal = event.detail.value;
+    // Dirty-check: if there are unsaved edits, confirm before reloading
+    if (this.dirtyOverrides.size > 0) {
+      // eslint-disable-next-line no-alert
+      const ok = window.confirm(
+        "You have unsaved changes. Switching horizons will discard them. Continue?"
+      );
+      if (!ok) {
+        // Revert visually by re-emitting the old value (re-render via reassignment)
+        const prev = this.selectedHorizon;
+        this.selectedHorizon = null;
+
+        this.selectedHorizon = prev;
+        return;
+      }
+      this.dirtyOverrides.clear();
+    }
+    this.selectedHorizon = newVal;
+    sessionStorageSet(this._horizonStorageKey(), newVal);
+    this.currentPage = 1;
+    this.loadRecords();
+  }
+
+  // ── Phase C: Final / Stretch summary cards ──
+
+  get showFinalCard() {
+    return this.currentSummary && this.currentSummary.finalForecast != null;
+  }
+
+  get showStretchCard() {
+    return this.currentSummary && this.currentSummary.stretchForecast != null;
+  }
+
+  get finalCardLabel() {
+    return (
+      this.currentSummary?.finalLabel ||
+      this.config?.finalForecastLabel ||
+      "Final Forecast"
+    );
+  }
+
+  get stretchCardLabel() {
+    return (
+      this.currentSummary?.stretchLabel ||
+      this.config?.stretchForecastLabel ||
+      "Stretch Forecast"
+    );
+  }
+
+  get formattedFinalAmount() {
+    return this._formatAmountShort(this.currentSummary?.finalForecast || 0);
+  }
+
+  get formattedStretchAmount() {
+    return this._formatAmountShort(this.currentSummary?.stretchForecast || 0);
+  }
+
+  _formatAmountShort(amount) {
+    const v = Number(amount) || 0;
+    if (v >= 1000) {
+      return "$" + Math.round(v / 1000).toLocaleString() + "K";
+    }
+    return "$" + v.toLocaleString();
+  }
+
+  // Phase C: read-only banner
+  get showReadOnlyBanner() {
+    return this.isHorizonReadOnly;
+  }
+
+  get horizonLabel() {
+    const opt = HORIZON_OPTIONS.find((o) => o.value === this.selectedHorizon);
+    return opt ? opt.label : this.selectedHorizon;
+  }
 
   // ── Dirty tracking ──
   dirtyOverrides = new Map();
@@ -110,6 +299,9 @@ export default class RevtForecastApp extends LightningElement {
         const amount = totals[apiName] || 0;
         const count = counts[apiName] || 0;
         const isActive = this.activeCategoryFilter === apiName;
+        const overrides = this.currentSummary?.categoryOverrides || {};
+        const override = overrides[apiName];
+        const hasOverride = override && override.overrideValue != null;
         return {
           name: apiName,
           apiName,
@@ -130,7 +322,26 @@ export default class RevtForecastApp extends LightningElement {
             amount.toLocaleString() +
             " (" +
             count +
-            " deals)"
+            " deals)",
+          hasOverride,
+          overrideValue: hasOverride ? override.overrideValue : null,
+          overrideDelta: hasOverride
+            ? override.overrideValue - (override.computedValue || 0)
+            : null,
+          formattedDelta: hasOverride
+            ? (override.overrideValue >= (override.computedValue || 0)
+                ? "+"
+                : "") +
+              "$" +
+              Math.abs(
+                override.overrideValue - (override.computedValue || 0)
+              ).toLocaleString()
+            : "",
+          overrideByName: override?.overrideByName || "",
+          overrideNotes: override?.overrideNotes || "",
+          summaryId: override?.summaryId || null,
+          computedAmount: override?.computedValue || amount,
+          isStale: override?.isStale === true
         };
       });
   }
@@ -202,8 +413,8 @@ export default class RevtForecastApp extends LightningElement {
   }
 
   get formattedCoverage() {
-    const ratio = this.currentSummary?.coverageRatio;
-    if (ratio == null) return "N/A";
+    const ratio = Number(this.currentSummary?.coverageRatio);
+    if (!isFinite(ratio)) return "N/A";
     return ratio.toFixed(1) + "x";
   }
 
@@ -226,7 +437,7 @@ export default class RevtForecastApp extends LightningElement {
   }
 
   get coverageAmountClass() {
-    const ratio = this.currentSummary?.coverageRatio || 0;
+    const ratio = Number(this.currentSummary?.coverageRatio) || 0;
     if (ratio >= 3) return "cc-amount coverage-healthy";
     if (ratio >= 1.5) return "cc-amount coverage-caution";
     return "cc-amount coverage-low";
@@ -309,11 +520,13 @@ export default class RevtForecastApp extends LightningElement {
   }
 
   get canSubmit() {
-    return this.context?.canSubmit;
+    // Phase C: Submitting only makes sense for the current period view
+    return this.context?.canSubmit && !this.isHorizonReadOnly;
   }
 
   get canFreeze() {
-    return this.context?.canFreeze;
+    // Phase C: Freeze only makes sense for the current period view
+    return this.context?.canFreeze && !this.isHorizonReadOnly;
   }
 
   get submitLabel() {
@@ -333,13 +546,23 @@ export default class RevtForecastApp extends LightningElement {
   }
 
   get isSaveDisabled() {
+    // Phase C: Save disabled while in multi-period read-only mode.
     return (
-      this.isLocked || !this.context?.canEdit || this.dirtyOverrides.size === 0
+      this.isLocked ||
+      this.isHorizonReadOnly ||
+      !this.context?.canEdit ||
+      this.dirtyOverrides.size === 0
     );
   }
 
   get hasDirtyChanges() {
     return this.dirtyOverrides.size > 0;
+  }
+
+  // Phase C: combined lock — true when actively saving OR when viewing
+  // a multi-period horizon (where editing is disabled by design).
+  get isGridLocked() {
+    return this.isLocked || this.isHorizonReadOnly;
   }
 
   get dirtyCountLabel() {
@@ -429,12 +652,17 @@ export default class RevtForecastApp extends LightningElement {
         healthBandFilter: request.healthBandFilter || null,
         pendingApprovalOnly: request.pendingApprovalOnly || false,
         overriddenOnly: request.overriddenOnly || false,
-        divergentOnly: request.divergentOnly || false
+        divergentOnly: request.divergentOnly || false,
+        groupId: this.selectedGroupId || null,
+        horizon: this.selectedHorizon || null
       });
       this.totalCount = result.totalCount;
       this.totalUnfilteredCount = result.totalUnfilteredCount;
       this.currentSummary = result.summary;
       this.currentPage = result.pageNumber;
+      // Phase C: ForecastService marks multi-period horizons as readOnly so the
+      // grid/save/submit/freeze switch off (editing across periods is unsafe).
+      this.isHorizonReadOnly = result.readOnly === true;
 
       // Determine filtering strategy
       this.isClientSideFiltering = this.totalUnfilteredCount <= 500;
@@ -606,9 +834,21 @@ export default class RevtForecastApp extends LightningElement {
 
   sortClientSide(field, direction) {
     const dir = direction === "DESC" ? -1 : 1;
+    const isDisplayField = field.startsWith("df_");
+    const isMetricField = field.startsWith("metric_");
+    const dfKey = isDisplayField ? field.substring(3) : null;
     this.allRecords = [...this.allRecords].sort((a, b) => {
-      const va = a[field] || "";
-      const vb = b[field] || "";
+      let va, vb;
+      if (isDisplayField) {
+        va = a.displayFieldValues?.[dfKey] ?? "";
+        vb = b.displayFieldValues?.[dfKey] ?? "";
+      } else if (isMetricField) {
+        va = a.metricValues?.[field] ?? 0;
+        vb = b.metricValues?.[field] ?? 0;
+      } else {
+        va = a[field] ?? "";
+        vb = b[field] ?? "";
+      }
       if (va < vb) return -1 * dir;
       if (va > vb) return 1 * dir;
       return 0;
@@ -1185,6 +1425,42 @@ export default class RevtForecastApp extends LightningElement {
     document.body.removeChild(link);
   }
 
+  // ── Phase D: Summary override handlers ──
+
+  handleSummaryOverride(event) {
+    const { summaryId, overrideValue, notes } = event.detail;
+    overrideSummaryValue({ summaryId, overrideValue, notes })
+      .then(() => {
+        this.showToast(
+          "success",
+          "Override Saved",
+          "Category forecast updated."
+        );
+        this.loadRecords();
+      })
+      .catch((err) => {
+        this.showError(
+          "Override failed: " + (err.body?.message || err.message)
+        );
+      });
+  }
+
+  handleSummaryClear(event) {
+    const { summaryId } = event.detail;
+    clearSummaryOverride({ summaryId })
+      .then(() => {
+        this.showToast(
+          "success",
+          "Override Cleared",
+          "Reverted to pipeline computed value."
+        );
+        this.loadRecords();
+      })
+      .catch((err) => {
+        this.showError("Clear failed: " + (err.body?.message || err.message));
+      });
+  }
+
   // ── Toast helpers ──
 
   showToast(variant, title, message) {
@@ -1193,5 +1469,16 @@ export default class RevtForecastApp extends LightningElement {
 
   showError(message) {
     this.showToast("error", "Error", message);
+  }
+
+  // ── Admin navigation ──
+
+  navigateToAdmin() {
+    this[NavigationMixin.Navigate]({
+      type: "standard__navItemPage",
+      attributes: {
+        apiName: "REVT__REVT_Admin"
+      }
+    });
   }
 }

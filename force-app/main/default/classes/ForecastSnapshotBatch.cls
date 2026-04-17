@@ -39,6 +39,11 @@ public class ForecastSnapshotBatch implements Database.Batchable<SObject>, Sched
    * @param sc The SchedulableContext
    */
   public void execute(SchedulableContext sc) {
+    // Phase D: Suppress nightly snapshots for cadence-enabled orgs
+    Forecast_Configuration__c config = ForecastDataService.getActiveConfig();
+    if (config != null && String.isNotBlank(config.Forecast_Cadence__c)) {
+      return; // Cadence batch handles snapshots
+    }
     Database.executeBatch(this, 50);
   }
 

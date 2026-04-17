@@ -1,0 +1,143 @@
+<template>
+  <lightning-card title="Forecast Groups" icon-name="standard:groups">
+    <lightning-button
+      slot="actions"
+      label="+ Add Group"
+      variant="neutral"
+      icon-name="utility:add"
+      onclick={handleAddGroup}
+    ></lightning-button>
+    <lightning-button
+      slot="actions"
+      label="Save All"
+      variant="brand"
+      onclick={handleSaveAll}
+      disabled={isSaving}
+      class="slds-m-left_x-small"
+    ></lightning-button>
+
+    <div class="slds-p-around_medium">
+      <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading"></lightning-spinner>
+      </template>
+      <template if:false={isLoading}>
+        <template for:each={groups} for:item="g">
+          <div
+            key={g.Id}
+            class="slds-box slds-m-bottom_small slds-p-around_small"
+          >
+            <!-- Row 1: Name, Type, Order, Active, Delete -->
+            <div
+              class="slds-grid slds-gutters_small slds-grid_vertical-align-end"
+            >
+              <div class="slds-col slds-size_5-of-12">
+                <lightning-input
+                  label="Group Name"
+                  value={g._name}
+                  data-id={g.Id}
+                  data-field="name"
+                  onchange={handleFieldChange}
+                  field-level-help="Display name for this group in the forecast view."
+                ></lightning-input>
+              </div>
+              <div class="slds-col slds-size_3-of-12">
+                <lightning-combobox
+                  label="Type"
+                  value={g._groupType}
+                  options={groupTypeOptions}
+                  data-id={g.Id}
+                  data-field="groupType"
+                  onchange={handleFieldChange}
+                  field-level-help="All = no filter. Record Type = filter by RT. Custom Field = filter by a field value."
+                ></lightning-combobox>
+              </div>
+              <div class="slds-col slds-size_2-of-12">
+                <lightning-input
+                  type="number"
+                  label="Order"
+                  value={g._sortOrder}
+                  data-id={g.Id}
+                  data-field="sortOrder"
+                  onchange={handleFieldChange}
+                  min="1"
+                  field-level-help="Display order (1 = first)."
+                ></lightning-input>
+              </div>
+              <div class="slds-col slds-size_2-of-12 slds-text-align_right">
+                <lightning-icon
+                  icon-name={g._activeIcon}
+                  size="x-small"
+                  title="Active status"
+                  class="slds-m-right_small"
+                ></lightning-icon>
+                <lightning-button-icon
+                  icon-name="utility:delete"
+                  variant="bare"
+                  alternative-text="Deactivate"
+                  title="Deactivate this group"
+                  data-id={g.Id}
+                  onclick={handleRemoveGroup}
+                ></lightning-button-icon>
+              </div>
+            </div>
+
+            <!-- Row 2: Record Type names (conditional) -->
+            <template if:true={g._isRecordType}>
+              <div class="slds-m-top_small">
+                <lightning-input
+                  label="Record Type Developer Names (comma-separated)"
+                  value={g._recordTypeNames}
+                  data-id={g.Id}
+                  data-field="recordTypeNames"
+                  onchange={handleFieldChange}
+                  placeholder="e.g., New_Business, Renewal"
+                  field-level-help="Comma-separated RT DeveloperNames for this group."
+                ></lightning-input>
+              </div>
+            </template>
+
+            <!-- Row 2: Custom Field source (conditional) -->
+            <template if:true={g._isCustomField}>
+              <div class="slds-grid slds-gutters_small slds-m-top_small">
+                <div class="slds-col slds-size_1-of-2">
+                  <c-revt-multi-select
+                    label="Source Object"
+                    value={g._sourceObject}
+                    options={sourceObjectOptions}
+                    data-id={g.Id}
+                    data-field="sourceObject"
+                    onchange={handleFieldChange}
+                    placeholder="Search objects..."
+                    single-select
+                    field-level-help="Object holding the grouping field."
+                  ></c-revt-multi-select>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                  <c-revt-multi-select
+                    label="Grouping Field"
+                    value={g._groupField}
+                    options={g._fieldOptions}
+                    data-id={g.Id}
+                    data-field="groupField"
+                    onchange={handleFieldChange}
+                    placeholder="Search fields..."
+                    single-select
+                    field-level-help="Field whose values determine group membership. Lookup fields show the related record Name."
+                  ></c-revt-multi-select>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+
+        <template if:false={groups.length}>
+          <div
+            class="slds-text-align_center slds-p-around_large slds-text-color_weak"
+          >
+            No forecast groups configured.
+          </div>
+        </template>
+      </template>
+    </div>
+  </lightning-card>
+</template>

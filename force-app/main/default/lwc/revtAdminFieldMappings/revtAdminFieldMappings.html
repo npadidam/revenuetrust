@@ -1,0 +1,146 @@
+<template>
+  <lightning-card title="Display Fields" icon-name="utility:connected_apps">
+    <lightning-button
+      slot="actions"
+      label="+ Add Field"
+      variant="neutral"
+      icon-name="utility:add"
+      onclick={handleAddField}
+    ></lightning-button>
+    <lightning-button
+      slot="actions"
+      label="Save All"
+      variant="brand"
+      onclick={handleSaveAll}
+      disabled={isSaving}
+      class="slds-m-left_x-small"
+    ></lightning-button>
+
+    <div class="slds-p-around_medium">
+      <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading"></lightning-spinner>
+      </template>
+      <template if:false={isLoading}>
+        <template for:each={fields} for:item="f">
+          <div
+            key={f.Id}
+            class="slds-box slds-m-bottom_small slds-p-around_small"
+          >
+            <div
+              class="slds-grid slds-gutters_small slds-grid_vertical-align-end"
+            >
+              <div class="slds-col slds-size_3-of-12">
+                <lightning-input
+                  label="Label"
+                  value={f._label}
+                  data-id={f.Id}
+                  data-field="label"
+                  onchange={handleFieldChange}
+                  field-level-help="Column header shown in the forecast grid."
+                ></lightning-input>
+              </div>
+              <div class="slds-col slds-size_2-of-12">
+                <lightning-combobox
+                  label="Location"
+                  value={f._displayLocation}
+                  options={locationOptions}
+                  data-id={f.Id}
+                  data-field="displayLocation"
+                  onchange={handleFieldChange}
+                  field-level-help="Main Grid: always visible. Expanded Detail: shown when row is expanded. Both: shown in both views."
+                ></lightning-combobox>
+              </div>
+              <div class="slds-col slds-size_2-of-12">
+                <lightning-combobox
+                  label="Width"
+                  value={f._columnWidth}
+                  options={widthOptions}
+                  data-id={f.Id}
+                  data-field="columnWidth"
+                  onchange={handleFieldChange}
+                  field-level-help="Column width hint: Narrow (80px), Medium (120px), Wide (200px)."
+                ></lightning-combobox>
+              </div>
+              <div class="slds-col slds-size_1-of-12">
+                <lightning-input
+                  type="number"
+                  label="Order"
+                  value={f._sortOrder}
+                  data-id={f.Id}
+                  data-field="sortOrder"
+                  onchange={handleFieldChange}
+                  min="1"
+                  field-level-help="Column order (1 = leftmost)."
+                ></lightning-input>
+              </div>
+              <div class="slds-col slds-size_1-of-12">
+                <template if:true={f._canDelete}>
+                  <lightning-input
+                    type="checkbox"
+                    label="Active"
+                    checked={f._isActive}
+                    data-id={f.Id}
+                    data-field="isActive"
+                    onchange={handleFieldCheckChange}
+                  ></lightning-input>
+                </template>
+              </div>
+              <div class="slds-col slds-size_1-of-12 slds-text-align_right">
+                <template if:true={f._isSystem}>
+                  <lightning-badge label="System"></lightning-badge>
+                </template>
+                <template if:true={f._canDelete}>
+                  <lightning-button-icon
+                    icon-name="utility:delete"
+                    variant="bare"
+                    alternative-text="Remove"
+                    title="Remove field"
+                    data-id={f.Id}
+                    onclick={handleDeleteField}
+                  ></lightning-button-icon>
+                </template>
+              </div>
+            </div>
+            <!-- Row 2: Source Object + Field -->
+            <div class="slds-grid slds-gutters_small slds-m-top_small">
+              <div class="slds-col slds-size_1-of-2">
+                <c-revt-multi-select
+                  label="Source Object"
+                  value={f._objectApiName}
+                  options={sourceObjectOptions}
+                  data-id={f.Id}
+                  data-field="objectApiName"
+                  onchange={handleFieldChange}
+                  placeholder="Search objects..."
+                  single-select
+                  field-level-help="Which Salesforce object this field comes from."
+                ></c-revt-multi-select>
+              </div>
+              <div class="slds-col slds-size_1-of-2">
+                <c-revt-multi-select
+                  label="Field"
+                  value={f._fieldApiName}
+                  options={f._fieldOptions}
+                  data-id={f.Id}
+                  data-field="fieldApiName"
+                  onchange={handleFieldChange}
+                  placeholder="Search fields..."
+                  single-select
+                  field-level-help="The field to display in this column. For child objects, numeric fields are summed, text shows first value."
+                ></c-revt-multi-select>
+              </div>
+            </div>
+          </div>
+        </template>
+
+        <template if:false={fields.length}>
+          <div
+            class="slds-text-align_center slds-p-around_large slds-text-color_weak"
+          >
+            No display fields configured.
+          </div>
+        </template>
+      </template>
+    </div>
+  </lightning-card>
+</template>

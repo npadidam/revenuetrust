@@ -1,0 +1,295 @@
+<template>
+  <div class="quota-manager">
+    <!-- Period + Group selectors -->
+    <div class="slds-grid slds-grid_align-spread slds-m-bottom_small">
+      <div class="slds-col slds-grid slds-gutters_xx-small">
+        <lightning-combobox
+          label="Period"
+          value={selectedPeriodId}
+          options={periodOptions}
+          onchange={handlePeriodChange}
+          variant="label-hidden"
+          class="period-picker slds-m-right_x-small"
+        ></lightning-combobox>
+        <!-- Phase B: Group selector \u2014 always shown so admin can pick config-wide vs group-specific -->
+        <template if:true={showGroupSelector}>
+          <lightning-combobox
+            label="Group"
+            value={selectedGroupValue}
+            options={groupSelectorOptions}
+            onchange={handleGroupChange}
+            variant="label-hidden"
+            class="group-picker"
+          ></lightning-combobox>
+        </template>
+      </div>
+      <div class="slds-col slds-grid slds-grid_align-end slds-gutters_xx-small">
+        <lightning-button
+          label="Import CSV"
+          icon-name="utility:upload"
+          variant="neutral"
+          onclick={handleImportClick}
+          class="slds-m-right_xx-small"
+        ></lightning-button>
+        <lightning-button
+          label="Distribute"
+          icon-name="utility:chart"
+          variant="neutral"
+          onclick={handleDistributeClick}
+          class="slds-m-right_xx-small"
+        ></lightning-button>
+        <lightning-button
+          label="Copy from Last"
+          icon-name="utility:copy"
+          variant="neutral"
+          onclick={handleCopyClick}
+          class="slds-m-right_xx-small"
+        ></lightning-button>
+        <lightning-button
+          label="Save All"
+          variant="brand"
+          onclick={handleSaveAll}
+        ></lightning-button>
+      </div>
+    </div>
+
+    <!-- Loading -->
+    <template if:true={isLoading}>
+      <lightning-spinner
+        alternative-text="Loading"
+        size="small"
+      ></lightning-spinner>
+    </template>
+
+    <!-- Quota table -->
+    <template if:true={hasRows}>
+      <table
+        class="slds-table slds-table_bordered slds-table_cell-buffer quota-table"
+      >
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Level</th>
+            <th>Target</th>
+            <th>Status</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <template for:each={rows} for:item="r">
+            <tr key={r.participantId}>
+              <td>{r.userName}</td>
+              <td class="slds-text-body_small">{r.userEmail}</td>
+              <td>L{r.level}</td>
+              <td>
+                <lightning-input
+                  type="number"
+                  value={r.targetAmount}
+                  variant="label-hidden"
+                  step="1000"
+                  data-user-id={r.userId}
+                  onchange={handleTargetChange}
+                ></lightning-input>
+              </td>
+              <td>
+                <template if:true={r.hasQuota}>
+                  <span class="slds-badge slds-badge_lightest">{r.status}</span>
+                </template>
+                <template if:false={r.hasQuota}>
+                  <span class="slds-text-color_weak">No quota</span>
+                </template>
+              </td>
+              <td>
+                <lightning-input
+                  value={r.notes}
+                  variant="label-hidden"
+                  data-user-id={r.userId}
+                  onchange={handleNotesChange}
+                  placeholder="Notes"
+                ></lightning-input>
+              </td>
+            </tr>
+          </template>
+        </tbody>
+      </table>
+    </template>
+
+    <template if:false={hasRows}>
+      <template if:false={isLoading}>
+        <p
+          class="slds-text-color_weak slds-p-around_medium slds-text-align_center"
+        >
+          Select a period to view quotas.
+        </p>
+      </template>
+    </template>
+
+    <!-- Import CSV modal -->
+    <template if:true={showImportModal}>
+      <section
+        role="dialog"
+        tabindex="-1"
+        aria-modal="true"
+        class="slds-modal slds-fade-in-open"
+      >
+        <div class="slds-modal__container">
+          <header class="slds-modal__header">
+            <lightning-button-icon
+              icon-name="utility:close"
+              variant="bare-inverse"
+              class="slds-modal__close"
+              onclick={closeImportModal}
+            ></lightning-button-icon>
+            <h2 class="slds-modal__title">Import Quotas from CSV</h2>
+          </header>
+          <div class="slds-modal__content slds-p-around_medium">
+            <p class="slds-m-bottom_small">
+              CSV format: <strong>Email, Target Amount</strong>
+            </p>
+            <lightning-textarea
+              label="Paste CSV content"
+              value={csvContent}
+              onchange={handleCsvChange}
+              rows="8"
+              placeholder="Email,Target Amount&#10;jane@acme.com,1500000&#10;bob@acme.com,1200000"
+            ></lightning-textarea>
+            <template if:true={importErrors}>
+              <div class="slds-m-top_small error-table">
+                <h3 class="slds-text-title_caps slds-m-bottom_xx-small">
+                  Errors
+                </h3>
+                <template for:each={importErrors} for:item="ie">
+                  <div
+                    key={ie.rowNumber}
+                    class="slds-text-body_small slds-text-color_error"
+                  >
+                    Row {ie.rowNumber}: {ie.email} — {ie.error}
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+          <footer class="slds-modal__footer">
+            <lightning-button
+              label="Cancel"
+              onclick={closeImportModal}
+            ></lightning-button>
+            <lightning-button
+              label="Import"
+              variant="brand"
+              onclick={handleImport}
+              class="slds-m-left_x-small"
+            ></lightning-button>
+          </footer>
+        </div>
+      </section>
+      <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Distribute modal -->
+    <template if:true={showDistributeModal}>
+      <section
+        role="dialog"
+        tabindex="-1"
+        aria-modal="true"
+        class="slds-modal slds-fade-in-open"
+      >
+        <div class="slds-modal__container">
+          <header class="slds-modal__header">
+            <lightning-button-icon
+              icon-name="utility:close"
+              variant="bare-inverse"
+              class="slds-modal__close"
+              onclick={closeDistributeModal}
+            ></lightning-button-icon>
+            <h2 class="slds-modal__title">Distribute Evenly</h2>
+          </header>
+          <div class="slds-modal__content slds-p-around_medium">
+            <lightning-input
+              type="number"
+              label="Team Total"
+              value={distributeTotal}
+              onchange={handleDistributeTotalChange}
+              step="1000"
+              formatter="currency"
+              class="slds-m-bottom_small"
+            ></lightning-input>
+            <lightning-radio-group
+              label="If quotas already exist:"
+              options={conflictOptions}
+              value={distributeConflict}
+              onchange={handleDistributeConflictChange}
+              type="radio"
+            ></lightning-radio-group>
+          </div>
+          <footer class="slds-modal__footer">
+            <lightning-button
+              label="Cancel"
+              onclick={closeDistributeModal}
+            ></lightning-button>
+            <lightning-button
+              label="Distribute"
+              variant="brand"
+              onclick={handleDistribute}
+              class="slds-m-left_x-small"
+            ></lightning-button>
+          </footer>
+        </div>
+      </section>
+      <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+
+    <!-- Copy from Last modal -->
+    <template if:true={showCopyModal}>
+      <section
+        role="dialog"
+        tabindex="-1"
+        aria-modal="true"
+        class="slds-modal slds-fade-in-open"
+      >
+        <div class="slds-modal__container">
+          <header class="slds-modal__header">
+            <lightning-button-icon
+              icon-name="utility:close"
+              variant="bare-inverse"
+              class="slds-modal__close"
+              onclick={closeCopyModal}
+            ></lightning-button-icon>
+            <h2 class="slds-modal__title">Copy from Last Period</h2>
+          </header>
+          <div class="slds-modal__content slds-p-around_medium">
+            <lightning-radio-group
+              label="If quotas already exist:"
+              options={conflictOptions}
+              value={copyConflict}
+              onchange={handleCopyConflictChange}
+              type="radio"
+              class="slds-m-bottom_small"
+            ></lightning-radio-group>
+            <lightning-input
+              type="number"
+              label="Adjustment % (e.g. 10 for +10%)"
+              value={copyAdjustment}
+              onchange={handleCopyAdjustmentChange}
+              step="1"
+            ></lightning-input>
+          </div>
+          <footer class="slds-modal__footer">
+            <lightning-button
+              label="Cancel"
+              onclick={closeCopyModal}
+            ></lightning-button>
+            <lightning-button
+              label="Copy"
+              variant="brand"
+              onclick={handleCopy}
+              class="slds-m-left_x-small"
+            ></lightning-button>
+          </footer>
+        </div>
+      </section>
+      <div class="slds-backdrop slds-backdrop_open"></div>
+    </template>
+  </div>
+</template>

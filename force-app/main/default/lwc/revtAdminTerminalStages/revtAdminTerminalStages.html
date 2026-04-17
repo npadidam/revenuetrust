@@ -1,0 +1,100 @@
+<template>
+  <lightning-card title="Terminal Stages" icon-name="utility:stage_collection">
+    <lightning-button
+      slot="actions"
+      label="Save"
+      variant="brand"
+      onclick={handleSave}
+      disabled={isSaving}
+    ></lightning-button>
+
+    <div class="slds-p-around_medium">
+      <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading"></lightning-spinner>
+      </template>
+      <template if:false={isLoading}>
+        <!-- Config-level defaults -->
+        <h3 class="slds-text-title_caps slds-m-bottom_x-small">
+          Default Terminal Stages
+        </h3>
+        <p
+          class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+        >
+          These stages apply to all groups by default. Select which Opportunity
+          stages indicate a deal is won or lost.
+        </p>
+        <div class="slds-grid slds-gutters_small slds-m-bottom_large">
+          <div class="slds-col slds-size_1-of-2">
+            <c-revt-multi-select
+              label="Closed Won Stages"
+              selected-values={configWonStages}
+              options={stageOptions}
+              onchange={handleConfigWonChange}
+              placeholder="Search stages..."
+              field-level-help="Opportunity stages that indicate a deal is won. Drives the Closed Won category and attainment."
+            ></c-revt-multi-select>
+          </div>
+          <div class="slds-col slds-size_1-of-2">
+            <c-revt-multi-select
+              label="Closed Lost Stages"
+              selected-values={configLostStages}
+              options={stageOptions}
+              onchange={handleConfigLostChange}
+              placeholder="Search stages..."
+              field-level-help="Opportunity stages that indicate a deal is lost."
+            ></c-revt-multi-select>
+          </div>
+        </div>
+
+        <!-- Per-group overrides (only shown when multiple groups exist) -->
+        <template if:true={hasMultipleGroups}>
+          <h3 class="slds-text-title_caps slds-m-bottom_x-small">
+            Per-Group Overrides
+          </h3>
+          <p
+            class="slds-text-body_small slds-text-color_weak slds-m-bottom_small"
+          >
+            Override terminal stages for specific groups. Leave empty to inherit
+            the defaults above.
+          </p>
+          <template for:each={nonAllGroups} for:item="g">
+            <div
+              key={g.Id}
+              class="slds-box slds-m-bottom_small slds-p-around_small"
+            >
+              <h4 class="slds-text-title_bold slds-m-bottom_x-small">
+                {g._name}
+              </h4>
+              <div class="slds-grid slds-gutters_small">
+                <div class="slds-col slds-size_1-of-2">
+                  <c-revt-multi-select
+                    label="Closed Won (override)"
+                    selected-values={g._closedWonStages}
+                    options={stageOptions}
+                    data-id={g.Id}
+                    data-field="closedWonStages"
+                    onchange={handleGroupStagesChange}
+                    placeholder="Inherit defaults..."
+                    field-level-help="Override won stages for this group. Leave empty to use defaults."
+                  ></c-revt-multi-select>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                  <c-revt-multi-select
+                    label="Closed Lost (override)"
+                    selected-values={g._closedLostStages}
+                    options={stageOptions}
+                    data-id={g.Id}
+                    data-field="closedLostStages"
+                    onchange={handleGroupStagesChange}
+                    placeholder="Inherit defaults..."
+                    field-level-help="Override lost stages for this group. Leave empty to use defaults."
+                  ></c-revt-multi-select>
+                </div>
+              </div>
+            </div>
+          </template>
+        </template>
+      </template>
+    </div>
+  </lightning-card>
+</template>

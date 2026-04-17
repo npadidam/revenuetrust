@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Scope_Custom_Object__c</fullName>
+    <label>Scope Custom Object</label>
+    <description
+  >API name of the object holding the custom scope field. Paired with Scope_Custom_Field__c. Only used when Scope_Determination = Custom_Field.</description>
+    <inlineHelpText
+  >e.g., Opportunity, Account, User. Only used when Scope_Determination = Custom_Field.</inlineHelpText>
+    <type>Text</type>
+    <length>100</length>
+    <required>false</required>
+    <unique>false</unique>
+</CustomField>

@@ -5,13 +5,14 @@
 .grid-header {
   background-color: #fafaf9;
   border-bottom: 2px solid #dddbda;
-  padding: 8px 0;
+  padding: 6px 0;
   font-size: 0.7rem;
   text-transform: uppercase;
-  white-space: nowrap;
+  white-space: normal;
+  word-wrap: break-word;
   position: sticky;
   top: 0;
-  z-index: 1;
+  z-index: 2;
 }
 
 .grid-body {
@@ -19,79 +20,82 @@
   overflow: visible;
 }
 
+/* Base column — all columns inherit this */
 .gcol {
-  padding: 4px 8px;
-  flex-shrink: 0;
+  padding: 4px 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .col-expand {
   width: 28px;
   flex: 0 0 28px;
 }
+
 .col-name {
-  flex: 2 1 180px;
-  min-width: 140px;
-}
-.col-owner {
-  flex: 1.2 1 120px;
+  flex: 1.8 1 0;
   min-width: 100px;
 }
-.col-stage {
-  flex: 1 1 100px;
-  min-width: 80px;
-}
-.col-date {
-  flex: 0.9 1 90px;
-  min-width: 80px;
-}
-.col-amount {
-  flex: 0.9 1 90px;
-  min-width: 80px;
-  text-align: left;
-}
+
 .col-health {
-  width: 64px;
-  flex: 0 0 64px;
+  width: 55px;
+  flex: 0 0 55px;
   text-align: center;
+  white-space: nowrap;
 }
+
 .col-metric {
-  flex: 1 1 100px;
-  min-width: 80px;
-  text-align: left;
+  flex: 1 1 0;
+  min-width: 70px;
 }
+
 .col-category {
-  flex: 1 1 110px;
-  min-width: 90px;
-}
-.col-override-date {
-  flex: 0.9 1 90px;
+  flex: 1 1 0;
   min-width: 80px;
 }
-.col-status {
-  flex: 0.7 1 70px;
-  min-width: 60px;
+
+.col-override-date {
+  flex: 1 1 0;
+  min-width: 70px;
 }
+
+.col-status {
+  flex: 0.6 1 0;
+  min-width: 50px;
+}
+
 .col-flags {
   width: 28px;
   flex: 0 0 28px;
   text-align: center;
 }
+
 .col-divergence {
   width: 28px;
   flex: 0 0 28px;
   text-align: center;
 }
+
 .col-estimator {
-  flex: 1.2 1 140px;
-  min-width: 120px;
+  flex: 1 1 0;
+  min-width: 100px;
 }
 
 .sortable {
   cursor: pointer;
+  user-select: none;
 }
 
 .sortable:hover {
   background-color: #f3f2f2;
+}
+
+/* Sort indicator */
+.sort-icon {
+  margin-left: 2px;
 }
 
 .pagination-bar {

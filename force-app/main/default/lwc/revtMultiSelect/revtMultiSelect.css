@@ -2,6 +2,14 @@
   position: relative;
 }
 
+/* Match lightning-combobox input height (1.875rem) */
+.slds-combobox__input {
+  height: 1.875rem;
+  min-height: 1.875rem;
+  line-height: 1.875rem;
+  font-size: 0.8125rem;
+}
+
 .pill-container {
   display: flex;
   flex-wrap: wrap;

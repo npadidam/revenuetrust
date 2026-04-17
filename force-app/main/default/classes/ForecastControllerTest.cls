@@ -511,7 +511,9 @@ private class ForecastControllerTest {
       request.healthBandFilter,
       request.pendingApprovalOnly,
       request.overriddenOnly,
-      request.divergentOnly
+      request.divergentOnly,
+      null,
+      null
     );
     Test.stopTest();
 
@@ -553,7 +555,9 @@ private class ForecastControllerTest {
       request.healthBandFilter,
       request.pendingApprovalOnly,
       request.overriddenOnly,
-      request.divergentOnly
+      request.divergentOnly,
+      null,
+      null
     );
     Test.stopTest();
 

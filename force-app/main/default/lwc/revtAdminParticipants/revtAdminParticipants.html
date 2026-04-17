@@ -1,0 +1,70 @@
+<template>
+  <lightning-card title="Participants" icon-name="standard:people">
+    <lightning-button
+      slot="actions"
+      label="Refresh from Hierarchy"
+      variant="neutral"
+      icon-name="utility:refresh"
+      onclick={handleRefreshLevels}
+      class="slds-m-right_x-small"
+      title="Re-pull hierarchy level labels. Levels with auto-derive on update; manual overrides are preserved."
+    ></lightning-button>
+    <lightning-button
+      slot="actions"
+      label="Sync Participants"
+      variant="brand"
+      onclick={handleSync}
+    ></lightning-button>
+    <div class="slds-p-around_medium">
+      <div class="slds-m-bottom_medium">
+        <lightning-combobox
+          label="Select Period"
+          value={selectedPeriodId}
+          options={periodOptions}
+          onchange={handlePeriodChange}
+          placeholder="Choose a period..."
+        ></lightning-combobox>
+      </div>
+      <template if:true={isLoading}>
+        <lightning-spinner alternative-text="Loading"></lightning-spinner>
+      </template>
+      <template if:false={isLoading}>
+        <template if:true={hasParticipants}>
+          <lightning-datatable
+            key-field="Id"
+            data={participants}
+            columns={columns}
+            onsave={handleInlineSave}
+            draft-values={draftValues}
+            onrowaction={handleRowAction}
+            hide-checkbox-column
+          >
+          </lightning-datatable>
+          <div class="slds-m-top_small slds-text-align_center">
+            <lightning-button
+              label="Previous"
+              onclick={handlePrevious}
+              disabled={isFirstPage}
+              variant="neutral"
+              class="slds-m-right_x-small"
+            ></lightning-button>
+            <span class="slds-p-horizontal_small">Page {currentPage}</span>
+            <lightning-button
+              label="Next"
+              onclick={handleNext}
+              disabled={isLastPage}
+              variant="neutral"
+            ></lightning-button>
+          </div>
+        </template>
+        <template if:false={hasParticipants}>
+          <div
+            class="slds-text-align_center slds-p-around_large slds-text-color_weak"
+          >
+            No participants found for this period.
+          </div>
+        </template>
+      </template>
+    </div>
+  </lightning-card>
+</template>

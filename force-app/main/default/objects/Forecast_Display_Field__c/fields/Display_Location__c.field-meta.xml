@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Display_Location__c</fullName>
+    <label>Display Location</label>
+    <type>Picklist</type>
+    <valueSet>
+        <restricted>true</restricted>
+        <valueSetDefinition>
+            <sorted>false</sorted>
+            <value><fullName>Main_Grid</fullName><default>true</default><label
+        >Main Grid</label></value>
+            <value><fullName>Expanded_Detail</fullName><default
+        >false</default><label>Expanded Detail</label></value>
+            <value><fullName>Both</fullName><default>false</default><label
+        >Both</label></value>
+        </valueSetDefinition>
+    </valueSet>
+</CustomField>

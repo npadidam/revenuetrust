@@ -1,0 +1,45 @@
+.review-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.review-section {
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 10px 14px;
+}
+.review-label {
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  color: #706e6b;
+  font-weight: 600;
+}
+.review-value {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #080707;
+}
+.review-detail {
+  font-size: 0.75rem;
+  color: #706e6b;
+  margin-top: 2px;
+}
+.review-list {
+  font-size: 0.8rem;
+  margin: 4px 0 0 16px;
+  color: #706e6b;
+}
+.review-cats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.review-cat-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: white;
+}

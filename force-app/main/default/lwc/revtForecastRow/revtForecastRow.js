@@ -125,6 +125,59 @@ export default class RevtForecastRow extends LightningElement {
       .filter((m) => m.isEditable);
   }
 
+  get mainGridDisplayFields() {
+    if (!this.config?.displayFields || !this.record?.displayFieldValues)
+      return [];
+    const dfv = this.record.displayFieldValues || {};
+    return this.config.displayFields
+      .filter(
+        (f) =>
+          f.isActive &&
+          (f.displayLocation === "Main_Grid" || f.displayLocation === "Both")
+      )
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map((f) => {
+        // Key matches Apex: Opportunity fields use fieldApiName, parent fields use objectApiName.fieldApiName
+        const displayKey =
+          f.objectApiName === "Opportunity"
+            ? f.fieldApiName
+            : f.objectApiName + "." + f.fieldApiName;
+        const val = dfv[displayKey];
+        const formatted = val != null ? String(val) : "";
+        return {
+          key: "df_" + displayKey,
+          value: formatted,
+          widthStyle:
+            f.columnWidth === "Narrow"
+              ? "width:80px"
+              : f.columnWidth === "Wide"
+                ? "width:200px"
+                : "width:120px"
+        };
+      });
+  }
+
+  get expandedDetailFields() {
+    if (!this.config?.displayFields || !this.record?.displayFieldValues)
+      return [];
+    return this.config.displayFields
+      .filter(
+        (f) =>
+          f.isActive &&
+          (f.displayLocation === "Expanded_Detail" ||
+            f.displayLocation === "Both")
+      )
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+      .map((f) => {
+        const val = this.record.displayFieldValues[f.fieldApiName];
+        return {
+          key: "df_" + f.fieldApiName,
+          label: f.fieldLabel,
+          value: val != null ? String(val) : ""
+        };
+      });
+  }
+
   get prevLevelCategory() {
     if (this.record.isClosed) return null;
     const apiName = this.record.prevLevelCategory;

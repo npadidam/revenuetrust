@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Override_Stages__c</fullName>
+    <label>Override Stages</label>
+    <description
+  >When true, this group uses its own Closed_Won_Stages and Closed_Lost_Stages. When false, inherits from config-level stages.</description>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>

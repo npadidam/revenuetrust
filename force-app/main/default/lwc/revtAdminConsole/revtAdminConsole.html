@@ -1,0 +1,104 @@
+<template>
+  <div class="admin-console">
+    <template if:true={isLoading}>
+      <lightning-spinner
+        alternative-text="Loading"
+        size="medium"
+      ></lightning-spinner>
+    </template>
+
+    <template if:true={config}>
+      <lightning-tabset active-tab-value={activeTab} onactive={handleTabChange}>
+        <lightning-tab
+          label="General"
+          value="general"
+          icon-name="utility:settings"
+        >
+          <c-revt-admin-general-settings
+            config={config}
+            onsave={handleConfigSaved}
+          ></c-revt-admin-general-settings>
+        </lightning-tab>
+
+        <lightning-tab
+          label="Metrics"
+          value="metrics"
+          icon-name="utility:metrics"
+        >
+          <c-revt-admin-metrics config-id={config.Id}></c-revt-admin-metrics>
+        </lightning-tab>
+
+        <lightning-tab
+          label="Categories"
+          value="categories"
+          icon-name="utility:bucket"
+        >
+          <c-revt-admin-categories
+            config-id={config.Id}
+          ></c-revt-admin-categories>
+        </lightning-tab>
+
+        <lightning-tab
+          label="Terminal Stages"
+          value="stages"
+          icon-name="utility:stage_collection"
+        >
+          <c-revt-admin-terminal-stages
+            config-id={config.Id}
+          ></c-revt-admin-terminal-stages>
+        </lightning-tab>
+
+        <lightning-tab label="Groups" value="groups" icon-name="utility:groups">
+          <c-revt-admin-groups config-id={config.Id}></c-revt-admin-groups>
+        </lightning-tab>
+
+        <lightning-tab
+          label="Periods"
+          value="periods"
+          icon-name="utility:date_input"
+        >
+          <c-revt-admin-periods config-id={config.Id}></c-revt-admin-periods>
+        </lightning-tab>
+
+        <lightning-tab
+          label="Participants"
+          value="participants"
+          icon-name="utility:people"
+        >
+          <c-revt-admin-participants
+            config-id={config.Id}
+            periods={periods}
+          ></c-revt-admin-participants>
+        </lightning-tab>
+
+        <lightning-tab
+          label="Field Mappings"
+          value="mappings"
+          icon-name="utility:connected_apps"
+        >
+          <c-revt-admin-field-mappings
+            config-id={config.Id}
+          ></c-revt-admin-field-mappings>
+        </lightning-tab>
+
+        <lightning-tab label="Quotas" value="quotas" icon-name="utility:target">
+          <c-revt-quota-manager periods={periods}></c-revt-quota-manager>
+        </lightning-tab>
+      </lightning-tabset>
+    </template>
+
+    <template if:false={config}>
+      <template if:false={isLoading}>
+        <div
+          class="slds-illustration slds-illustration_small slds-p-around_large slds-text-align_center"
+        >
+          <p class="slds-text-heading_medium">No Active Configuration</p>
+          <p class="slds-text-body_small slds-text-color_weak slds-m-top_small">
+            Run the Onboarding Wizard from the Forecast tab to create your first
+            configuration.
+          </p>
+        </div>
+      </template>
+    </template>
+  </div>
+</template>

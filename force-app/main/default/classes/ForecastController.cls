@@ -69,7 +69,9 @@ public with sharing class ForecastController {
     List<String> healthBandFilter,
     Boolean pendingApprovalOnly,
     Boolean overriddenOnly,
-    Boolean divergentOnly
+    Boolean divergentOnly,
+    Id groupId,
+    String horizon
   ) {
     try {
       ForecastQueryRequest request = new ForecastQueryRequest();
@@ -87,6 +89,8 @@ public with sharing class ForecastController {
       request.pendingApprovalOnly = pendingApprovalOnly;
       request.overriddenOnly = overriddenOnly;
       request.divergentOnly = divergentOnly;
+      request.groupId = groupId;
+      request.horizon = horizon;
       return ForecastService.queryForecastRecords(request);
     } catch (Exception e) {
       throw new AuraHandledException(e.getMessage());
@@ -308,6 +312,103 @@ public with sharing class ForecastController {
   }
 
   // ══════════════════════════════════════════════════════════════════════
+  //  Config detection — used by Forecast tab to show wizard vs grid
+  // ══════════════════════════════════════════════════════════════════════
+
+  @AuraEnabled(cacheable=true)
+  public static Boolean hasActiveConfig() {
+    return OnboardingController.hasActiveConfig();
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  Phase B: Forecast Groups — for multi-group UI rendering
+  // ══════════════════════════════════════════════════════════════════════
+
+  /**
+   * @description Return active Forecast_Group__c records for the active configuration,
+   *              ordered by Sort_Order. Used by revtForecastApp to render the
+   *              group selector and per-group/grand total sections.
+   */
+  @AuraEnabled(cacheable=true)
+  public static List<ForecastGroupDTO> getGroupsForActiveConfig() {
+    List<ForecastGroupDTO> result = new List<ForecastGroupDTO>();
+    Forecast_Configuration__c cfg = ForecastDataService.getActiveConfig();
+    if (cfg == null) {
+      return result;
+    }
+    for (Forecast_Group__c g : [
+      SELECT Id, Name, Group_Type__c, Sort_Order__c, Is_Active__c
+      FROM Forecast_Group__c
+      WHERE Forecast_Configuration__c = :cfg.Id AND Is_Active__c = TRUE
+      ORDER BY Sort_Order__c ASC, CreatedDate ASC
+    ]) {
+      ForecastGroupDTO dto = new ForecastGroupDTO();
+      dto.groupId = g.Id;
+      dto.groupName = g.Name;
+      dto.groupType = g.Group_Type__c;
+      dto.sortOrder = g.Sort_Order__c != null ? g.Sort_Order__c.intValue() : 1;
+      result.add(dto);
+    }
+    return result;
+  }
+
+  public class ForecastGroupDTO {
+    @AuraEnabled
+    public Id groupId;
+    @AuraEnabled
+    public String groupName;
+    @AuraEnabled
+    public String groupType;
+    @AuraEnabled
+    public Integer sortOrder;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  Phase D: Forecast Summary overrides and trend
+  // ══════════════════════════════════════════════════════════════════════
+
+  @AuraEnabled
+  public static Forecast_Summary__c overrideSummaryValue(
+    Id summaryId,
+    Decimal overrideValue,
+    String notes
+  ) {
+    return ForecastSummaryService.overrideSummary(
+      summaryId,
+      overrideValue,
+      notes
+    );
+  }
+
+  @AuraEnabled
+  public static void clearSummaryOverride(Id summaryId) {
+    ForecastSummaryService.clearOverride(summaryId);
+  }
+
+  @AuraEnabled(cacheable=true)
+  public static List<Forecast_Summary_History__c> getSummaryTrend(
+    Id participantId,
+    Id periodId,
+    String categoryApiName
+  ) {
+    // Find the summary for this category
+    List<Forecast_Summary__c> summaries = [
+      SELECT Id
+      FROM Forecast_Summary__c
+      WHERE
+        Forecast_Participant__c = :participantId
+        AND Forecast_Period__c = :periodId
+        AND Category_API_Name__c = :categoryApiName
+        AND Metric_Sort_Order__c = 1
+      LIMIT 1
+    ];
+    if (summaries.isEmpty()) {
+      return new List<Forecast_Summary_History__c>();
+    }
+    return ForecastSummaryService.getTrendHistory(summaries[0].Id);
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
   //  DTOs — §7 and §11
   // ══════════════════════════════════════════════════════════════════════
 
@@ -341,6 +442,46 @@ public with sharing class ForecastController {
     public Integer paginationSize;
     @AuraEnabled
     public String hierarchySource;
+    // Phase C: horizon defaults + Final/Stretch labels for the toolbar / summary cards
+    @AuraEnabled
+    public String defaultHorizon;
+    @AuraEnabled
+    public Integer customHorizonPeriods;
+    @AuraEnabled
+    public Integer pastPeriodsVisible;
+    @AuraEnabled
+    public String finalForecastLabel;
+    @AuraEnabled
+    public String stretchForecastLabel;
+    // Phase D: Display fields
+    @AuraEnabled
+    public List<DisplayFieldDTO> displayFields;
+  }
+
+  /**
+   * @description Phase D: Display field configuration DTO.
+   */
+  public class DisplayFieldDTO {
+    @AuraEnabled
+    public Id fieldId;
+    @AuraEnabled
+    public String fieldLabel;
+    @AuraEnabled
+    public String objectApiName;
+    @AuraEnabled
+    public String fieldApiName;
+    @AuraEnabled
+    public String fieldType;
+    @AuraEnabled
+    public String displayLocation;
+    @AuraEnabled
+    public Integer sortOrder;
+    @AuraEnabled
+    public String columnWidth;
+    @AuraEnabled
+    public Boolean isActive;
+    @AuraEnabled
+    public Boolean isSystem;
   }
 
   /**
@@ -415,6 +556,8 @@ public with sharing class ForecastController {
     public String color;
     @AuraEnabled
     public Boolean countsTowardTarget;
+    @AuraEnabled
+    public Boolean countsTowardStretch;
     @AuraEnabled
     public Boolean isTerminal;
     @AuraEnabled
@@ -541,6 +684,9 @@ public with sharing class ForecastController {
     public String prevLevelUserName;
     @AuraEnabled
     public Integer prevLevel;
+    // Phase D: Display field values
+    @AuraEnabled
+    public Map<String, Object> displayFieldValues;
   }
 
   /**
@@ -559,6 +705,9 @@ public with sharing class ForecastController {
     public Integer pageSize;
     @AuraEnabled
     public ForecastSummaryDTO summary;
+    // Phase C: when horizon != Current_Period, response is read-only summary mode
+    @AuraEnabled
+    public Boolean readOnly;
   }
 
   /**
@@ -615,6 +764,14 @@ public with sharing class ForecastController {
     public String sortField;
     @AuraEnabled
     public String sortDirection;
+    // Phase B: optional group context. When set, restricts the query to opps
+    // that belong to this group; when null, the active config's default group is used.
+    @AuraEnabled
+    public Id groupId;
+    // Phase C: forecast horizon (overrides config.Default_Horizon__c when set).
+    // 'Current_Period' / 'Current_Plus_Next' / 'Quarter' / 'Quarter_Plus_Next' / 'Fiscal_Year' / 'Custom'
+    @AuraEnabled
+    public String horizon;
   }
 
   /**
@@ -679,6 +836,18 @@ public with sharing class ForecastController {
     public Decimal aiPredicted;
     @AuraEnabled
     public Decimal managerAccuracy;
+    // Phase C: Final / Stretch forecast totals + UI labels
+    @AuraEnabled
+    public Decimal finalForecast;
+    @AuraEnabled
+    public Decimal stretchForecast;
+    @AuraEnabled
+    public String finalLabel;
+    @AuraEnabled
+    public String stretchLabel;
+    // Phase D: per-category summary overrides
+    @AuraEnabled
+    public Map<String, SummaryOverrideDTO> categoryOverrides;
   }
 
   /**
@@ -799,5 +968,39 @@ public with sharing class ForecastController {
     public String mimeType;
     @AuraEnabled
     public String csvContent;
+  }
+
+  /**
+   * @description Phase D: Summary override detail for a single category.
+   */
+  public class SummaryOverrideDTO {
+    @AuraEnabled
+    public Id summaryId;
+    @AuraEnabled
+    public Decimal computedValue;
+    @AuraEnabled
+    public Decimal overrideValue;
+    @AuraEnabled
+    public Decimal effectiveValue;
+    @AuraEnabled
+    public String overrideByName;
+    @AuraEnabled
+    public DateTime overrideDate;
+    @AuraEnabled
+    public String overrideNotes;
+    @AuraEnabled
+    public Boolean isStale;
+  }
+
+  /**
+   * @description Phase D: Single trend data point for summary sparkline.
+   */
+  public class TrendPointDTO {
+    @AuraEnabled
+    public Date snapshotDate;
+    @AuraEnabled
+    public Decimal value;
+    @AuraEnabled
+    public String snapshotType;
   }
 }

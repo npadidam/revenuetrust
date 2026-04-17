@@ -1,0 +1,30 @@
+.quota-manager {
+  min-height: 200px;
+}
+.period-picker {
+  max-width: 250px;
+}
+.quota-table {
+  font-size: 0.8rem;
+}
+.quota-table th {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  font-weight: 700;
+}
+.att-green {
+  color: #04844b;
+  font-weight: 700;
+}
+.att-yellow {
+  color: #8c6d1f;
+  font-weight: 700;
+}
+.att-red {
+  color: #ea001e;
+  font-weight: 700;
+}
+.error-table {
+  max-height: 150px;
+  overflow-y: auto;
+}

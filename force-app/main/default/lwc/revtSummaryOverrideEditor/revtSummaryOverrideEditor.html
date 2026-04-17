@@ -1,0 +1,58 @@
+<template>
+  <template if:true={isOpen}>
+    <section
+      class="slds-popover slds-popover_medium override-popover"
+      role="dialog"
+    >
+      <header class="slds-popover__header">
+        <h2 class="slds-text-heading_small">{headerLabel}</h2>
+      </header>
+      <div class="slds-popover__body">
+        <p class="slds-text-body_small slds-m-bottom_small">
+          Pipeline computed: <strong>{formattedComputed}</strong>
+        </p>
+        <lightning-input
+          type="number"
+          label="Override Amount"
+          formatter="currency"
+          step="0.01"
+          value={_overrideValue}
+          onchange={handleOverrideChange}
+          field-level-help="Set the forecast total for this category. Enter 0 for a zero forecast. Leave empty to use computed value."
+        ></lightning-input>
+        <template if:true={hasDelta}>
+          <p class="slds-text-body_small slds-m-top_xx-small delta-text">
+            Adjustment: {deltaAmount}
+          </p>
+        </template>
+        <lightning-textarea
+          label="Notes"
+          value={_notes}
+          onchange={handleNotesChange}
+          placeholder="Why are you adjusting this forecast?"
+          max-length="2000"
+          class="slds-m-top_small"
+        ></lightning-textarea>
+      </div>
+      <footer class="slds-popover__footer slds-grid slds-grid_align-spread">
+        <lightning-button
+          label="Clear Override"
+          variant="destructive-text"
+          onclick={handleClear}
+        ></lightning-button>
+        <div>
+          <lightning-button
+            label="Cancel"
+            onclick={handleCancel}
+            class="slds-m-right_x-small"
+          ></lightning-button>
+          <lightning-button
+            label="Save Override"
+            variant="brand"
+            onclick={handleSave}
+          ></lightning-button>
+        </div>
+      </footer>
+    </section>
+  </template>
+</template>

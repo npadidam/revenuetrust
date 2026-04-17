@@ -14,41 +14,37 @@
           <lightning-icon icon-name={sortIcon} size="xx-small"></lightning-icon>
         </template>
       </div>
-      <div
-        class="gcol col-owner sortable"
-        role="columnheader"
-        aria-sort={getAriaSort_ownerName}
-        onclick={handleSortOwner}
-      >
-        <span class="slds-truncate">Owner</span>
-        <template lwc:if={isSortedByOwner}>
-          <lightning-icon icon-name={sortIcon} size="xx-small"></lightning-icon>
-        </template>
-      </div>
-      <div class="gcol col-stage" role="columnheader">Stage</div>
-      <div
-        class="gcol col-date sortable"
-        role="columnheader"
-        aria-sort={getAriaSort_closeDate}
-        onclick={handleSortCloseDate}
-      >
-        <span>Close Date</span>
-        <template lwc:if={isSortedByCloseDate}>
-          <lightning-icon icon-name={sortIcon} size="xx-small"></lightning-icon>
-        </template>
-      </div>
-      <div class="gcol col-amount" role="columnheader">CRM Amount</div>
+      <!-- Dynamic display field headers with sort indicators -->
+      <template for:each={displayFieldHeaders} for:item="dh">
+        <div
+          key={dh.key}
+          class="gcol sortable"
+          role="columnheader"
+          data-sort-field={dh.fieldApiName}
+          onclick={handleSortDisplayField}
+        >
+          <span>{dh.label}</span>
+          <template lwc:if={dh.isSorted}>
+            <lightning-icon
+              icon-name={dh.sortIconName}
+              size="xx-small"
+              class="sort-icon"
+            ></lightning-icon>
+          </template>
+        </div>
+      </template>
       <template lwc:if={showHealthBadge}>
         <div
           class="gcol col-health sortable"
           role="columnheader"
           onclick={handleSortHealth}
+          style="white-space: nowrap"
         >
           Health
         </div>
       </template>
-      <!-- Dynamic metric headers -->
-      <template for:each={metricHeaders} for:item="mh">
+      <!-- Dynamic metric headers with sort indicators -->
+      <template for:each={sortedMetricHeaders} for:item="mh">
         <div
           key={mh.key}
           class="gcol col-metric sortable"
@@ -56,20 +52,61 @@
           data-sort-field={mh.key}
           onclick={handleSortMetric}
         >
-          <span class="slds-truncate">{mh.label}</span>
+          <span>{mh.label}</span>
+          <template lwc:if={mh.isSorted}>
+            <lightning-icon
+              icon-name={mh.sortIconName}
+              size="xx-small"
+              class="sort-icon"
+            ></lightning-icon>
+          </template>
         </div>
       </template>
       <div
         class="gcol col-category sortable"
         role="columnheader"
-        onclick={handleSortCategory}
+        data-sort-field="category"
+        onclick={handleSortGeneric}
       >
         Category
+        <template lwc:if={isSortedByCategory}>
+          <lightning-icon
+            icon-name={sortIcon}
+            size="xx-small"
+            class="sort-icon"
+          ></lightning-icon>
+        </template>
       </div>
-      <div class="gcol col-override-date" role="columnheader">
+      <div
+        class="gcol col-override-date sortable"
+        role="columnheader"
+        data-sort-field="closeDateOverride"
+        onclick={handleSortGeneric}
+      >
         Override Close
+        <template lwc:if={isSortedByOverrideClose}>
+          <lightning-icon
+            icon-name={sortIcon}
+            size="xx-small"
+            class="sort-icon"
+          ></lightning-icon>
+        </template>
       </div>
-      <div class="gcol col-status" role="columnheader">Status</div>
+      <div
+        class="gcol col-status sortable"
+        role="columnheader"
+        data-sort-field="status"
+        onclick={handleSortGeneric}
+      >
+        Status
+        <template lwc:if={isSortedByStatus}>
+          <lightning-icon
+            icon-name={sortIcon}
+            size="xx-small"
+            class="sort-icon"
+          ></lightning-icon>
+        </template>
+      </div>
       <div class="gcol col-flags" role="columnheader"></div>
       <div class="gcol col-divergence" role="columnheader"></div>
       <template lwc:if={showInlineEstimator}>

@@ -69,13 +69,20 @@
   background-color: #fef0ef;
 }
 
+/* Base column — MUST match revtForecastGrid.css exactly for alignment */
 .gcol {
-  padding: 1px 6px;
-  flex-shrink: 0;
+  padding: 2px 6px;
+  flex: 1 1 0;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  white-space: normal;
 }
 
 .col-category {
   overflow: visible;
+  flex: 1 1 0;
+  min-width: 80px;
 }
 
 .col-expand {
@@ -83,48 +90,29 @@
   flex: 0 0 28px;
   text-align: center;
 }
+
 .col-name {
-  flex: 2 1 180px;
-  min-width: 140px;
-}
-.col-owner {
-  flex: 1.2 1 120px;
+  flex: 1.8 1 0;
   min-width: 100px;
 }
-.col-stage {
-  flex: 1 1 100px;
-  min-width: 80px;
-}
-.col-date {
-  flex: 0.9 1 90px;
-  min-width: 80px;
-}
-.col-amount {
-  flex: 0.9 1 90px;
-  min-width: 80px;
-  text-align: left;
-}
+
 .col-health {
-  width: 64px;
-  flex: 0 0 64px;
+  width: 55px;
+  flex: 0 0 55px;
   text-align: center;
+  white-space: nowrap;
 }
 .col-metric {
-  flex: 1 1 100px;
-  min-width: 80px;
-  text-align: left;
-}
-.col-category {
-  flex: 1 1 110px;
-  min-width: 90px;
+  flex: 1 1 0;
+  min-width: 70px;
 }
 .col-override-date {
-  flex: 0.9 1 90px;
-  min-width: 80px;
+  flex: 1 1 0;
+  min-width: 70px;
 }
 .col-status {
-  flex: 0.7 1 70px;
-  min-width: 60px;
+  flex: 0.6 1 0;
+  min-width: 50px;
 }
 .col-flags {
   width: 28px;

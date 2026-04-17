@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Closed_Won_Stages__c</fullName>
+    <label>Closed Won Stages</label>
+    <description
+  >Comma-separated Opportunity stage API names treated as won for this group. Only used when Override_Stages = true.</description>
+    <type>LongTextArea</type>
+    <length>2000</length>
+    <visibleLines>3</visibleLines>
+</CustomField>

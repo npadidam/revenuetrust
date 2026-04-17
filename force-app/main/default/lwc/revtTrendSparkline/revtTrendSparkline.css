@@ -1,0 +1,15 @@
+.sparkline-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.trend-up {
+  color: #04844b;
+  font-size: 0.65rem;
+  font-weight: 600;
+}
+.trend-down {
+  color: #ea001e;
+  font-size: 0.65rem;
+  font-weight: 600;
+}

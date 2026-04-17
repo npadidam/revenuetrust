@@ -1,0 +1,496 @@
+<template>
+  <!-- Step 4: Terminal Stages -->
+  <template if:true={isStep4}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+      Terminal Stages
+    </h2>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+      Verify which stages indicate a deal is won or lost. These apply to all
+      groups by default.
+    </p>
+    <div class="slds-grid slds-gutters_small">
+      <div class="slds-col slds-size_1-of-2">
+        <h3 class="slds-text-title_caps slds-m-bottom_x-small">
+          Closed Won (default)
+        </h3>
+        <lightning-checkbox-group
+          label="Won Stages"
+          options={stageOptions}
+          value={wizardData.closedWonStages}
+          onchange={handleWonStagesChange}
+          variant="label-hidden"
+        ></lightning-checkbox-group>
+      </div>
+      <div class="slds-col slds-size_1-of-2">
+        <h3 class="slds-text-title_caps slds-m-bottom_x-small">
+          Closed Lost (default)
+        </h3>
+        <lightning-checkbox-group
+          label="Lost Stages"
+          options={stageOptions}
+          value={wizardData.closedLostStages}
+          onchange={handleLostStagesChange}
+          variant="label-hidden"
+        ></lightning-checkbox-group>
+      </div>
+    </div>
+
+    <!-- Phase B: Per-group stage overrides (only when 2+ groups exist) -->
+    <template if:true={hasMultipleGroups}>
+      <div class="slds-m-top_large">
+        <h3 class="slds-text-title_bold slds-m-bottom_x-small">
+          Per-Group Stage Overrides (Optional)
+        </h3>
+        <p
+          class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium"
+        >
+          Most groups inherit the stages above. Override only if a group needs
+          different won/lost stages (e.g., "Renewals" might use a "Renewed"
+          stage that "New Business" doesn't).
+        </p>
+        <template for:each={groupOverrideRows} for:item="g">
+          <div key={g._index} class="slds-box slds-m-bottom_x-small">
+            <lightning-input
+              type="checkbox"
+              label={g._toggleLabel}
+              checked={g.overrideStages}
+              data-index={g._index}
+              onchange={handleGroupOverrideToggle}
+            ></lightning-input>
+            <template if:true={g.overrideStages}>
+              <div class="slds-grid slds-gutters_small slds-m-top_x-small">
+                <div class="slds-col slds-size_1-of-2">
+                  <lightning-checkbox-group
+                    label="Closed Won (this group)"
+                    options={stageOptions}
+                    value={g.closedWonStages}
+                    data-index={g._index}
+                    onchange={handleGroupWonChange}
+                  ></lightning-checkbox-group>
+                </div>
+                <div class="slds-col slds-size_1-of-2">
+                  <lightning-checkbox-group
+                    label="Closed Lost (this group)"
+                    options={stageOptions}
+                    value={g.closedLostStages}
+                    data-index={g._index}
+                    onchange={handleGroupLostChange}
+                  ></lightning-checkbox-group>
+                </div>
+              </div>
+            </template>
+          </div>
+        </template>
+      </div>
+    </template>
+  </template>
+
+  <!-- Step 5: Metrics -->
+  <template if:true={isStep5}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+      Forecast Metrics
+    </h2>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+      What values does your team forecast? (Max 6) Pull amounts from Opportunity
+      OR roll up from a child object (line items, CPQ quote lines, custom
+      objects like Product Bookings).
+    </p>
+    <template for:each={metricRows} for:item="m">
+      <div key={m.sortOrder} class="slds-box slds-m-bottom_x-small metric-card">
+        <!-- Row 1: label, type, primary/editable, delete -->
+        <div class="slds-grid slds-gutters_xx-small slds-m-bottom_xx-small">
+          <div class="slds-col slds-size_4-of-12">
+            <lightning-input
+              label="Label"
+              value={m.label}
+              data-index={m.sortOrder}
+              data-field="label"
+              onchange={handleMetricFieldChange}
+              placeholder="e.g., Revenue, ACV, Customer Amount"
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_3-of-12">
+            <lightning-combobox
+              label="Type"
+              value={m.metricType}
+              options={metricTypeOptions}
+              data-index={m.sortOrder}
+              data-field="metricType"
+              onchange={handleMetricFieldChange}
+            ></lightning-combobox>
+          </div>
+          <div class="slds-col slds-size_2-of-12 slds-align-bottom">
+            <lightning-input
+              type="checkbox"
+              label="Primary"
+              checked={m.isPrimary}
+              data-index={m.sortOrder}
+              data-field="isPrimary"
+              onchange={handleMetricCheckChange}
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_2-of-12 slds-align-bottom">
+            <lightning-input
+              type="checkbox"
+              label="Editable"
+              checked={m.isEditable}
+              data-index={m.sortOrder}
+              data-field="isEditable"
+              onchange={handleMetricCheckChange}
+            ></lightning-input>
+          </div>
+          <div
+            class="slds-col slds-size_1-of-12 slds-align-bottom slds-text-align_right"
+          >
+            <template if:false={m.isPrimary}>
+              <lightning-button-icon
+                icon-name="utility:delete"
+                variant="bare"
+                alternative-text="Remove"
+                data-index={m.sortOrder}
+                onclick={handleRemoveMetric}
+              ></lightning-button-icon>
+            </template>
+          </div>
+        </div>
+
+        <!-- Row 2: Source object + source field cascade -->
+        <div
+          class="slds-grid slds-gutters_xx-small slds-grid_vertical-align-end"
+        >
+          <div class="slds-col slds-size_5-of-12">
+            <c-revt-multi-select
+              label="Source Object"
+              value={m._sourceObject}
+              options={sourceObjectOptions}
+              data-index={m.sortOrder}
+              onchange={handleSourceObjectChange}
+              field-level-help="Where to pull this metric value from. Default Opportunity uses Amount or your override."
+              placeholder="Search objects..."
+              single-select
+            ></c-revt-multi-select>
+          </div>
+          <!-- Opportunity-sourced: search-select for numeric fields on Opportunity -->
+          <template if:true={m._isOpportunitySource}>
+            <div class="slds-col slds-size_4-of-12">
+              <c-revt-multi-select
+                label="Source Field"
+                value={m.sourceField}
+                options={m._fieldOptions}
+                data-index={m.sortOrder}
+                onchange={handleSourceFieldChange}
+                placeholder="Search fields..."
+                single-select
+              ></c-revt-multi-select>
+            </div>
+            <div class="slds-col slds-size_3-of-12">
+              <p
+                class="slds-text-body_small slds-text-color_weak slds-m-top_small"
+              >
+                From Opportunity. Override values win.
+              </p>
+            </div>
+          </template>
+          <!-- Child-object sourced: dropdown of numeric fields + aggregation -->
+          <template if:true={m._isChildSource}>
+            <div class="slds-col slds-size_4-of-12">
+              <c-revt-multi-select
+                label="Source Field"
+                value={m.sourceField}
+                options={m._fieldOptions}
+                data-index={m.sortOrder}
+                onchange={handleSourceFieldChange}
+                placeholder="Search fields..."
+                single-select
+              ></c-revt-multi-select>
+            </div>
+            <div class="slds-col slds-size_3-of-12">
+              <lightning-combobox
+                label="Aggregation"
+                value={m.aggregation}
+                options={aggregationOptions}
+                data-index={m.sortOrder}
+                onchange={handleAggregationChange}
+              ></lightning-combobox>
+            </div>
+          </template>
+        </div>
+        <!-- Lookup field auto-detected display (read-only) -->
+        <template if:true={m._isChildSource}>
+          <p
+            class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small"
+          >
+            {m._lookupFieldDisplay}
+          </p>
+        </template>
+
+        <!-- Phase B: Filter Builder \u2014 structured clauses (max 5) -->
+        <div class="slds-m-top_small slds-border_top slds-p-top_x-small">
+          <p
+            class="slds-text-title_caps slds-text-color_weak slds-m-bottom_xx-small"
+          >
+            Filters (optional, max 5)
+          </p>
+          <template for:each={m._filters} for:item="f">
+            <div
+              key={f._fIdx}
+              class="slds-grid slds-gutters_xx-small slds-m-bottom_xx-small filter-row"
+            >
+              <div class="slds-col slds-size_4-of-12">
+                <c-revt-multi-select
+                  value={f.fieldApiName}
+                  options={m._filterFieldOptions}
+                  data-index={m.sortOrder}
+                  data-fidx={f._fIdx}
+                  onchange={handleFilterFieldChange}
+                  placeholder="Search fields..."
+                  single-select
+                ></c-revt-multi-select>
+              </div>
+              <div class="slds-col slds-size_2-of-12">
+                <lightning-combobox
+                  label="Operator"
+                  variant="label-hidden"
+                  value={f.operatorValue}
+                  options={filterOperatorOptions}
+                  data-index={m.sortOrder}
+                  data-fidx={f._fIdx}
+                  onchange={handleFilterOperatorChange}
+                ></lightning-combobox>
+              </div>
+              <div class="slds-col slds-size_3-of-12">
+                <template if:true={f._hasPicklistValues}>
+                  <lightning-combobox
+                    label="Value"
+                    variant="label-hidden"
+                    value={f.value}
+                    options={f._valueOptions}
+                    data-index={m.sortOrder}
+                    data-fidx={f._fIdx}
+                    onchange={handleFilterValueChange}
+                    placeholder="Pick a value"
+                  ></lightning-combobox>
+                </template>
+                <template if:false={f._hasPicklistValues}>
+                  <lightning-input
+                    label="Value"
+                    variant="label-hidden"
+                    value={f.value}
+                    data-index={m.sortOrder}
+                    data-fidx={f._fIdx}
+                    onchange={handleFilterValueChange}
+                    placeholder="Value"
+                  ></lightning-input>
+                </template>
+              </div>
+              <div class="slds-col slds-size_2-of-12">
+                <lightning-combobox
+                  label="And/Or"
+                  variant="label-hidden"
+                  value={f.logicalOperator}
+                  options={filterLogicalOperatorOptions}
+                  data-index={m.sortOrder}
+                  data-fidx={f._fIdx}
+                  onchange={handleFilterLogicalOpChange}
+                ></lightning-combobox>
+              </div>
+              <div class="slds-col slds-size_1-of-12 slds-text-align_right">
+                <lightning-button-icon
+                  icon-name="utility:delete"
+                  variant="bare"
+                  alternative-text="Remove clause"
+                  data-index={m.sortOrder}
+                  data-fidx={f._fIdx}
+                  onclick={handleRemoveFilterClause}
+                ></lightning-button-icon>
+              </div>
+            </div>
+          </template>
+          <template if:true={m._canAddFilter}>
+            <lightning-button
+              label="+ Add Filter Clause"
+              variant="base"
+              data-index={m.sortOrder}
+              onclick={handleAddFilterClause}
+              class="slds-m-top_xx-small"
+            ></lightning-button>
+          </template>
+          <template if:true={m._filterPreview}>
+            <p
+              class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small"
+            >
+              <strong>Preview:</strong> {m._filterPreview}
+            </p>
+          </template>
+        </div>
+      </div>
+    </template>
+    <template if:true={canAddMetric}>
+      <lightning-button
+        label="Add Metric"
+        icon-name="utility:add"
+        variant="neutral"
+        onclick={handleAddMetric}
+        class="slds-m-top_x-small"
+      ></lightning-button>
+    </template>
+  </template>
+
+  <!-- Step 6: Categories -->
+  <template if:true={isStep6}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+      Forecast Categories
+    </h2>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+      Select a template or build your own. Each category can count toward Final
+      and/or Stretch forecast totals.
+    </p>
+    <lightning-radio-group
+      label="Template"
+      options={categoryTemplateOptions}
+      value={wizardData.categoryTemplate}
+      type="button"
+      onchange={handleCategoryTemplateChange}
+      class="slds-m-bottom_medium"
+    ></lightning-radio-group>
+
+    <!-- Final / Stretch label inputs -->
+    <div class="slds-grid slds-gutters_small slds-m-bottom_medium">
+      <div class="slds-col slds-size_1-of-2">
+        <lightning-input
+          label="Final Forecast Label"
+          value={wizardData.finalForecastLabel}
+          onchange={handleFinalLabelChange}
+          field-level-help="The label shown for the Final Forecast total in the forecast tab. Sum of categories with 'Final' checked."
+          placeholder="Final Forecast"
+        ></lightning-input>
+      </div>
+      <div class="slds-col slds-size_1-of-2">
+        <lightning-input
+          label="Stretch Forecast Label"
+          value={wizardData.stretchForecastLabel}
+          onchange={handleStretchLabelChange}
+          field-level-help="The label shown for the Stretch Forecast total. Sum of categories with 'Stretch' checked."
+          placeholder="Stretch Forecast"
+        ></lightning-input>
+      </div>
+    </div>
+
+    <!-- Column headers -->
+    <div
+      class="slds-grid slds-gutters_xx-small slds-text-title_caps slds-text-color_weak slds-m-bottom_xx-small slds-p-horizontal_x-small"
+    >
+      <div class="cat-color"></div>
+      <div class="slds-col slds-size_3-of-12">Label</div>
+      <div class="slds-col slds-size_2-of-12">Color</div>
+      <div class="slds-col slds-size_1-of-12">Final</div>
+      <div class="slds-col slds-size_2-of-12">Stretch</div>
+      <div class="slds-col slds-size_2-of-12">Terminal</div>
+      <div class="slds-col slds-size_2-of-12 slds-text-align_right">
+        Actions
+      </div>
+    </div>
+
+    <div class="category-list">
+      <template for:each={categoryRows} for:item="cat">
+        <div
+          key={cat.sortOrder}
+          class="slds-grid slds-gutters_xx-small slds-m-bottom_xx-small slds-p-horizontal_x-small cat-row"
+        >
+          <div class="cat-color" style={cat._colorStyle}></div>
+          <div class="slds-col slds-size_3-of-12">
+            <lightning-input
+              label="Label"
+              value={cat.label}
+              variant="label-hidden"
+              data-index={cat.sortOrder}
+              data-field="label"
+              onchange={handleCatFieldChange}
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_2-of-12">
+            <lightning-input
+              type="color"
+              label="Color"
+              value={cat.color}
+              data-index={cat.sortOrder}
+              data-field="color"
+              variant="label-hidden"
+              onchange={handleCatFieldChange}
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_1-of-12">
+            <lightning-input
+              type="checkbox"
+              label="Final"
+              variant="label-hidden"
+              checked={cat.countsTowardTarget}
+              data-index={cat.sortOrder}
+              data-field="countsTowardTarget"
+              onchange={handleCatCheckChange}
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_2-of-12">
+            <lightning-input
+              type="checkbox"
+              label="Stretch"
+              variant="label-hidden"
+              checked={cat.countsTowardStretch}
+              data-index={cat.sortOrder}
+              data-field="countsTowardStretch"
+              onchange={handleCatCheckChange}
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_2-of-12">
+            <lightning-input
+              type="checkbox"
+              label="Terminal"
+              variant="label-hidden"
+              checked={cat.isTerminal}
+              data-index={cat.sortOrder}
+              data-field="isTerminal"
+              onchange={handleCatCheckChange}
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_2-of-12 slds-text-align_right">
+            <lightning-button-icon
+              icon-name="utility:delete"
+              variant="bare"
+              alternative-text={cat._deleteHint}
+              title={cat._deleteHint}
+              disabled={cat._deleteDisabled}
+              data-index={cat.sortOrder}
+              onclick={handleRemoveCategory}
+            ></lightning-button-icon>
+          </div>
+        </div>
+      </template>
+    </div>
+
+    <lightning-button
+      label="+ Add Category"
+      variant="neutral"
+      icon-name="utility:add"
+      onclick={handleAddCategory}
+      class="slds-m-top_x-small"
+    ></lightning-button>
+
+    <!-- Live preview -->
+    <div class="slds-box slds-m-top_medium slds-theme_shade">
+      <p class="slds-text-body_small slds-m-bottom_xx-small">
+        <strong>{finalLabelDisplay}:</strong>
+        <template if:true={finalPreviewParts}>{finalPreviewParts}</template>
+        <template if:false={finalPreviewParts}
+          >(no categories selected)</template
+        >
+      </p>
+      <p class="slds-text-body_small">
+        <strong>{stretchLabelDisplay}:</strong>
+        <template if:true={stretchPreviewParts}>{stretchPreviewParts}</template>
+        <template if:false={stretchPreviewParts}
+          >(no categories selected)</template
+        >
+      </p>
+    </div>
+  </template>
+</template>

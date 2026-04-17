@@ -7,315 +7,423 @@
     ></lightning-spinner>
   </template>
 
-  <div class="forecast-container slds-card">
-    <!-- ═══ TOOLBAR ═══ -->
-    <div
-      class="toolbar-bar slds-grid slds-grid_align-spread slds-p-around_x-small"
-    >
-      <div class="slds-col slds-grid slds-grid_vertical-align-center">
-        <span class={statusBadgeClass}>{statusLabel}</span>
-      </div>
-      <div class="slds-col toolbar">
-        <!-- Period picker -->
-        <lightning-combobox
-          label="Period"
-          value={selectedPeriodId}
-          options={periodOptions}
-          variant="label-hidden"
-          onchange={handlePeriodChange}
-          class="slds-m-right_x-small toolbar-picker"
-          disabled={isLocked}
-        ></lightning-combobox>
+  <!-- ═══ ONBOARDING WIZARD (no config) ═══ -->
+  <template lwc:if={showWizard}>
+    <c-revt-onboarding-wizard
+      onactivate={handleWizardComplete}
+    ></c-revt-onboarding-wizard>
+  </template>
 
-        <!-- Scope picker (only if multiple scopes) -->
-        <template lwc:if={showScopePicker}>
-          <lightning-combobox
-            label="Scope"
-            value={selectedScopeId}
-            options={scopeOptions}
-            variant="label-hidden"
-            onchange={handleScopeChange}
-            class="slds-m-right_x-small toolbar-picker"
-            disabled={isLocked}
-          ></lightning-combobox>
-        </template>
-
-        <!-- Currency toggle -->
-        <template lwc:if={showCurrencyToggle}>
-          <lightning-button-stateful
-            label-when-off="Corporate"
-            label-when-on="Local"
-            icon-name-when-off="utility:moneybag"
-            icon-name-when-on="utility:world"
-            selected={isLocalCurrency}
-            onclick={handleCurrencyToggle}
-            class="slds-m-right_small"
-          ></lightning-button-stateful>
-        </template>
-      </div>
-    </div>
-
-    <!-- ═══ DRILL-IN BREADCRUMBS ═══ -->
-    <template lwc:if={isDrillIn}>
-      <div
-        class="slds-p-horizontal_medium slds-p-vertical_xx-small breadcrumb-bar"
-      >
-        <lightning-breadcrumbs onnavigate={handleBreadcrumbClick}>
-          <template for:each={breadcrumbItems} for:item="bc">
-            <lightning-breadcrumb
-              key={bc.id}
-              label={bc.label}
-              name={bc.id}
-            ></lightning-breadcrumb>
-          </template>
-        </lightning-breadcrumbs>
-      </div>
-    </template>
-
-    <!-- ═══ FILTERS ═══ -->
-    <div class="slds-p-horizontal_small slds-p-vertical_xx-small">
-      <c-revt-forecast-filter-bar
-        config={config}
-        context={context}
-        stage-values={distinctStages}
-        records={allRecords}
-        period-id={selectedPeriodId}
-        scope-id={selectedScopeId}
-        participant-id={currentParticipantId}
-        onfilterchange={handleFilterChange}
-      ></c-revt-forecast-filter-bar>
-    </div>
-
-    <!-- ═══ CATEGORY TOTALS AS FILTER CARDS ═══ -->
-    <div
-      class="category-cards slds-grid slds-wrap slds-gutters_xx-small slds-p-horizontal_small slds-p-bottom_xx-small"
-    >
-      <template for:each={categoryCards} for:item="cc">
-        <div key={cc.name} class="slds-col">
+  <!-- ═══ FORECAST GRID (config exists) ═══ -->
+  <template lwc:if={showForecastGrid}>
+    <div class="forecast-container slds-card">
+      <!-- ═══ STICKY TOP SECTION ═══ -->
+      <div class="sticky-top">
+        <!-- ═══ TOOLBAR ═══ -->
+        <div
+          class="toolbar-bar slds-grid slds-grid_align-spread slds-p-around_x-small"
+        >
           <div
-            class={cc.cardClass}
-            data-category={cc.apiName}
-            onclick={handleCategoryCardClick}
-            title={cc.tooltip}
+            class="slds-col slds-grid slds-grid_vertical-align-center slds-wrap"
           >
-            <div class="cc-color-bar" style={cc.colorStyle}></div>
-            <div class="cc-body">
-              <div class="cc-header">
-                <span class="cc-label">{cc.label}</span>
-                <span class="cc-amount">{cc.formattedAmount}</span>
-              </div>
-              <div class="cc-count">{cc.countLabel}</div>
-            </div>
+            <!-- Forecast + Stretch tiles first, then status -->
+            <template lwc:if={showFinalCard}>
+              <span class="summary-tile summary-tile-final slds-m-right_small">
+                <span class="tile-label">{finalCardLabel}</span>
+                <span class="tile-amount">{formattedFinalAmount}</span>
+              </span>
+            </template>
+            <template lwc:if={showStretchCard}>
+              <span
+                class="summary-tile summary-tile-stretch slds-m-right_small"
+              >
+                <span class="tile-label">{stretchCardLabel}</span>
+                <span class="tile-amount">{formattedStretchAmount}</span>
+              </span>
+            </template>
+            <span class={statusBadgeClass}>{statusLabel}</span>
           </div>
-        </div>
-      </template>
-      <!-- Attainment card -->
-      <template lwc:if={showAttainment}>
-        <div class="slds-col">
-          <div class="category-card attainment-card">
-            <div class="cc-color-bar" style={attainmentColorStyle}></div>
-            <div class="cc-body">
-              <div class="cc-header">
-                <span class="cc-label">Attainment</span>
-                <span class="cc-amount" style={attainmentColorText}
-                  >{formattedAttainmentPct}</span
-                >
-              </div>
-              <div class="cc-count">{formattedAttainmentDetail}</div>
-            </div>
-          </div>
-        </div>
-      </template>
-      <!-- Coverage card -->
-      <template lwc:if={showCoverage}>
-        <div class="slds-col">
-          <div class="category-card coverage-card">
-            <div class="cc-body">
-              <div class="cc-header">
-                <span class="cc-label">Coverage</span>
-                <span class={coverageAmountClass}>{formattedCoverage}</span>
-              </div>
-              <div class="cc-count">{formattedCoverageDetail}</div>
-            </div>
-          </div>
-        </div>
-      </template>
-      <!-- Tier card -->
-      <template lwc:if={showTierInfo}>
-        <div class="slds-col">
-          <div class="category-card tier-card">
-            <div class="cc-body">
-              <div class="cc-header">
-                <span class="cc-label">{currentSummary.currentTier}</span>
-                <span class="cc-amount">{formattedCurrentRate}</span>
-              </div>
-              <template lwc:if={currentSummary.nextTierName}>
-                <div class="cc-count">
-                  Next: {currentSummary.nextTierName}
-                  ({formattedNextTierDistance} away)
-                </div>
-              </template>
-            </div>
-          </div>
-        </div>
-      </template>
-    </div>
+          <div class="slds-col toolbar">
+            <!-- Period picker -->
+            <lightning-combobox
+              label="Period"
+              value={selectedPeriodId}
+              options={periodOptions}
+              variant="label-hidden"
+              onchange={handlePeriodChange}
+              class="slds-m-right_x-small toolbar-picker"
+              disabled={isLocked}
+            ></lightning-combobox>
 
-    <!-- ═══ GRID ═══ -->
-    <div class="slds-p-horizontal_small">
-      <c-revt-forecast-grid
-        records={displayRecords}
-        config={config}
-        context={context}
-        summary={currentSummary}
-        current-page={currentPage}
-        total-count={totalCount}
-        page-size={pageSize}
-        is-locked={isLocked}
-        show-health-badge={showHealthBadge}
-        show-inline-estimator={hasIncentiveData}
-        period-id={selectedPeriodId}
-        onsort={handleSort}
-        onpagechange={handlePageChange}
-        onrowchange={handleRowChange}
-        ontoggleexpand={handleToggleExpand}
-        onownerclick={handleOwnerDrillIn}
-      ></c-revt-forecast-grid>
-    </div>
+            <!-- Scope picker (only if multiple scopes) -->
+            <template lwc:if={showScopePicker}>
+              <lightning-combobox
+                label="Scope"
+                value={selectedScopeId}
+                options={scopeOptions}
+                variant="label-hidden"
+                onchange={handleScopeChange}
+                class="slds-m-right_x-small toolbar-picker"
+                disabled={isLocked}
+              ></lightning-combobox>
+            </template>
 
-    <!-- ═══ ACTION BAR ═══ -->
-    <div class="slds-grid slds-grid_align-spread action-bar">
-      <!-- Dirty changes indicator -->
-      <div class="slds-col slds-grid slds-grid_vertical-align-center">
-        <template lwc:if={hasDirtyChanges}>
-          <span class="dirty-indicator">
-            <lightning-icon
-              icon-name="utility:warning"
-              size="xx-small"
-              alternative-text="Unsaved changes"
-              class="slds-m-right_xx-small"
-            ></lightning-icon>
-            {dirtyCountLabel}
-          </span>
+            <!-- Phase B: Group picker (only if multiple groups) -->
+            <template lwc:if={showGroupPicker}>
+              <lightning-combobox
+                label="Group"
+                value={selectedGroupId}
+                options={groupOptions}
+                variant="label-hidden"
+                onchange={handleGroupChange}
+                class="slds-m-right_x-small toolbar-picker"
+                disabled={isLocked}
+              ></lightning-combobox>
+            </template>
+
+            <!-- Phase C: Horizon picker -->
+            <template lwc:if={showHorizonPicker}>
+              <lightning-combobox
+                label="Horizon"
+                value={selectedHorizon}
+                options={horizonOptions}
+                variant="label-hidden"
+                onchange={handleHorizonChange}
+                class="slds-m-right_x-small toolbar-picker"
+                disabled={isLocked}
+              ></lightning-combobox>
+            </template>
+
+            <!-- Currency toggle -->
+            <template lwc:if={showCurrencyToggle}>
+              <lightning-button-stateful
+                label-when-off="Corporate"
+                label-when-on="Local"
+                icon-name-when-off="utility:moneybag"
+                icon-name-when-on="utility:world"
+                selected={isLocalCurrency}
+                onclick={handleCurrencyToggle}
+                class="slds-m-right_small"
+              ></lightning-button-stateful>
+            </template>
+
+            <!-- Admin gear icon -->
+            <lightning-button-icon
+              icon-name="utility:settings"
+              alternative-text="Admin Settings"
+              title="Admin Settings"
+              variant="border-filled"
+              onclick={navigateToAdmin}
+              class="admin-gear"
+            ></lightning-button-icon>
+          </div>
+        </div>
+
+        <!-- ═══ PHASE C: READ-ONLY HORIZON BANNER ═══ -->
+        <template lwc:if={showReadOnlyBanner}>
+          <div
+            class="slds-notify slds-notify_alert slds-theme_warning slds-p-around_x-small"
+          >
+            <span class="slds-assistive-text">Read-only</span>
+            <h2 class="slds-text-body_small">
+              <lightning-icon
+                icon-name="utility:info"
+                size="x-small"
+                class="slds-m-right_xx-small"
+              ></lightning-icon>
+              <strong>Read-only view:</strong> Showing aggregate totals across
+              the <em>{horizonLabel}</em> horizon. Switch to "Current Period" to
+              make edits.
+            </h2>
+          </div>
         </template>
+
+        <!-- ═══ DRILL-IN BREADCRUMBS ═══ -->
+        <template lwc:if={isDrillIn}>
+          <div
+            class="slds-p-horizontal_medium slds-p-vertical_xx-small breadcrumb-bar"
+          >
+            <lightning-breadcrumbs onnavigate={handleBreadcrumbClick}>
+              <template for:each={breadcrumbItems} for:item="bc">
+                <lightning-breadcrumb
+                  key={bc.id}
+                  label={bc.label}
+                  name={bc.id}
+                ></lightning-breadcrumb>
+              </template>
+            </lightning-breadcrumbs>
+          </div>
+        </template>
+
+        <!-- ═══ FILTERS ═══ -->
+        <div class="slds-p-horizontal_small slds-p-vertical_xx-small">
+          <c-revt-forecast-filter-bar
+            config={config}
+            context={context}
+            stage-values={distinctStages}
+            records={allRecords}
+            period-id={selectedPeriodId}
+            scope-id={selectedScopeId}
+            participant-id={currentParticipantId}
+            onfilterchange={handleFilterChange}
+          ></c-revt-forecast-filter-bar>
+        </div>
+
+        <!-- ═══ CATEGORY TOTALS AS FILTER CARDS ═══ -->
+        <div
+          class="category-cards slds-grid slds-wrap slds-gutters_xx-small slds-p-horizontal_small slds-p-bottom_xx-small"
+        >
+          <template for:each={categoryCards} for:item="cc">
+            <div key={cc.name} class="slds-col">
+              <div
+                class={cc.cardClass}
+                data-category={cc.apiName}
+                onclick={handleCategoryCardClick}
+                title={cc.tooltip}
+              >
+                <div class="cc-color-bar" style={cc.colorStyle}></div>
+                <div class="cc-body">
+                  <div class="cc-header">
+                    <span class="cc-label">{cc.label}</span>
+                    <span class="cc-amount">{cc.formattedAmount}</span>
+                  </div>
+                  <div class="cc-count">{cc.countLabel}</div>
+                  <template if:true={cc.hasOverride}>
+                    <div class="cc-override">
+                      <span class="override-delta">{cc.formattedDelta}</span>
+                      <span class="override-by"> by {cc.overrideByName}</span>
+                    </div>
+                  </template>
+                  <template if:true={cc.isStale}>
+                    <lightning-icon
+                      icon-name="utility:warning"
+                      size="xx-small"
+                      title="Pipeline changed since this override was set"
+                      class="stale-icon"
+                    ></lightning-icon>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </template>
+          <!-- Attainment card -->
+          <template lwc:if={showAttainment}>
+            <div class="slds-col">
+              <div class="category-card attainment-card">
+                <div class="cc-color-bar" style={attainmentColorStyle}></div>
+                <div class="cc-body">
+                  <div class="cc-header">
+                    <span class="cc-label">Attainment</span>
+                    <span class="cc-amount" style={attainmentColorText}
+                      >{formattedAttainmentPct}</span
+                    >
+                  </div>
+                  <div class="cc-count">{formattedAttainmentDetail}</div>
+                </div>
+              </div>
+            </div>
+          </template>
+          <!-- Coverage card -->
+          <template lwc:if={showCoverage}>
+            <div class="slds-col">
+              <div class="category-card coverage-card">
+                <div class="cc-body">
+                  <div class="cc-header">
+                    <span class="cc-label">Coverage</span>
+                    <span class={coverageAmountClass}>{formattedCoverage}</span>
+                  </div>
+                  <div class="cc-count">{formattedCoverageDetail}</div>
+                </div>
+              </div>
+            </div>
+          </template>
+          <!-- Tier card -->
+          <template lwc:if={showTierInfo}>
+            <div class="slds-col">
+              <div class="category-card tier-card">
+                <div class="cc-body">
+                  <div class="cc-header">
+                    <span class="cc-label">{currentSummary.currentTier}</span>
+                    <span class="cc-amount">{formattedCurrentRate}</span>
+                  </div>
+                  <template lwc:if={currentSummary.nextTierName}>
+                    <div class="cc-count">
+                      Next: {currentSummary.nextTierName}
+                      ({formattedNextTierDistance} away)
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Forecast/Stretch tiles moved to toolbar row above -->
+        </div>
       </div>
-      <div class="slds-col slds-grid slds-grid_align-end">
-        <!-- Copy dropdown -->
-        <template lwc:if={showCopyButton}>
+      <!-- /sticky-top -->
+
+      <!-- ═══ SUMMARY OVERRIDE EDITOR ═══ -->
+      <c-revt-summary-override-editor
+        onsave={handleSummaryOverride}
+        onclear={handleSummaryClear}
+      ></c-revt-summary-override-editor>
+
+      <!-- ═══ SCROLLABLE GRID AREA ═══ -->
+      <div class="grid-scroll-area slds-scrollable_y slds-p-horizontal_small">
+        <c-revt-forecast-grid
+          records={displayRecords}
+          config={config}
+          context={context}
+          summary={currentSummary}
+          current-page={currentPage}
+          total-count={totalCount}
+          page-size={pageSize}
+          is-locked={isGridLocked}
+          show-health-badge={showHealthBadge}
+          show-inline-estimator={hasIncentiveData}
+          period-id={selectedPeriodId}
+          onsort={handleSort}
+          onpagechange={handlePageChange}
+          onrowchange={handleRowChange}
+          ontoggleexpand={handleToggleExpand}
+          onownerclick={handleOwnerDrillIn}
+        ></c-revt-forecast-grid>
+      </div>
+
+      <!-- ═══ ACTION BAR ═══ -->
+      <div class="slds-grid slds-grid_align-spread action-bar">
+        <!-- Dirty changes indicator -->
+        <div class="slds-col slds-grid slds-grid_vertical-align-center">
+          <template lwc:if={hasDirtyChanges}>
+            <span class="dirty-indicator">
+              <lightning-icon
+                icon-name="utility:warning"
+                size="xx-small"
+                alternative-text="Unsaved changes"
+                class="slds-m-right_xx-small"
+              ></lightning-icon>
+              {dirtyCountLabel}
+            </span>
+          </template>
+        </div>
+        <div class="slds-col slds-grid slds-grid_align-end">
+          <!-- Copy dropdown -->
+          <template lwc:if={showCopyButton}>
+            <lightning-button-menu
+              alternative-text="Copy"
+              label="Copy"
+              variant="neutral"
+              menu-alignment="bottom-right"
+              onselect={handleCopySelect}
+              class="slds-m-right_x-small"
+              disabled={isLocked}
+            >
+              <template lwc:if={canCopyFromLevel}>
+                <lightning-menu-item
+                  label="From Previous Level (Overwrite)"
+                  value="level_OVERWRITE"
+                ></lightning-menu-item>
+                <lightning-menu-item
+                  label="From Previous Level (Merge)"
+                  value="level_MERGE"
+                ></lightning-menu-item>
+                <lightning-menu-item
+                  label="From Previous Level (Skip Edited)"
+                  value="level_SKIP_EDITED"
+                ></lightning-menu-item>
+                <lightning-menu-divider></lightning-menu-divider>
+              </template>
+              <lightning-menu-item
+                label="From Last Forecast (Overwrite)"
+                value="last_OVERWRITE"
+              ></lightning-menu-item>
+              <lightning-menu-item
+                label="From Last Forecast (Merge)"
+                value="last_MERGE"
+              ></lightning-menu-item>
+              <lightning-menu-item
+                label="From Last Forecast (Skip Edited)"
+                value="last_SKIP_EDITED"
+              ></lightning-menu-item>
+            </lightning-button-menu>
+          </template>
+
+          <!-- Export -->
           <lightning-button-menu
-            alternative-text="Copy"
-            label="Copy"
+            alternative-text="Export"
+            label="Export"
+            icon-name="utility:download"
             variant="neutral"
             menu-alignment="bottom-right"
-            onselect={handleCopySelect}
+            onselect={handleExportSelect}
             class="slds-m-right_x-small"
             disabled={isLocked}
           >
-            <template lwc:if={canCopyFromLevel}>
-              <lightning-menu-item
-                label="From Previous Level (Overwrite)"
-                value="level_OVERWRITE"
-              ></lightning-menu-item>
-              <lightning-menu-item
-                label="From Previous Level (Merge)"
-                value="level_MERGE"
-              ></lightning-menu-item>
-              <lightning-menu-item
-                label="From Previous Level (Skip Edited)"
-                value="level_SKIP_EDITED"
-              ></lightning-menu-item>
-              <lightning-menu-divider></lightning-menu-divider>
-            </template>
             <lightning-menu-item
-              label="From Last Forecast (Overwrite)"
-              value="last_OVERWRITE"
+              label="CSV (.csv)"
+              value="csv"
+              icon-name="utility:file"
             ></lightning-menu-item>
             <lightning-menu-item
-              label="From Last Forecast (Merge)"
-              value="last_MERGE"
-            ></lightning-menu-item>
-            <lightning-menu-item
-              label="From Last Forecast (Skip Edited)"
-              value="last_SKIP_EDITED"
+              label="Excel (.xls)"
+              value="xlsx"
+              icon-name="utility:spreadsheet"
             ></lightning-menu-item>
           </lightning-button-menu>
-        </template>
 
-        <!-- Export -->
-        <lightning-button-menu
-          alternative-text="Export"
-          label="Export"
-          icon-name="utility:download"
-          variant="neutral"
-          menu-alignment="bottom-right"
-          onselect={handleExportSelect}
-          class="slds-m-right_x-small"
-          disabled={isLocked}
-        >
-          <lightning-menu-item
-            label="CSV (.csv)"
-            value="csv"
-            icon-name="utility:file"
-          ></lightning-menu-item>
-          <lightning-menu-item
-            label="Excel (.xls)"
-            value="xlsx"
-            icon-name="utility:spreadsheet"
-          ></lightning-menu-item>
-        </lightning-button-menu>
-
-        <!-- Save -->
-        <lightning-button
-          label="Save"
-          variant="brand"
-          onclick={handleSaveClick}
-          class="slds-m-right_x-small"
-          disabled={isSaveDisabled}
-        ></lightning-button>
-
-        <!-- Submit -->
-        <template lwc:if={canSubmit}>
+          <!-- Save -->
           <lightning-button
-            label={submitLabel}
-            variant="success"
-            onclick={handleSubmitClick}
+            label="Save"
+            variant="brand"
+            onclick={handleSaveClick}
             class="slds-m-right_x-small"
-            disabled={isLocked}
+            disabled={isSaveDisabled}
           ></lightning-button>
-        </template>
 
-        <!-- Freeze -->
-        <template lwc:if={canFreeze}>
-          <lightning-button
-            label={freezeLabel}
-            variant="destructive"
-            onclick={handleFreezeClick}
-            disabled={isLocked}
-          ></lightning-button>
-        </template>
+          <!-- Submit -->
+          <template lwc:if={canSubmit}>
+            <lightning-button
+              label={submitLabel}
+              variant="success"
+              onclick={handleSubmitClick}
+              class="slds-m-right_x-small"
+              disabled={isLocked}
+            ></lightning-button>
+          </template>
+
+          <!-- Freeze -->
+          <template lwc:if={canFreeze}>
+            <lightning-button
+              label={freezeLabel}
+              variant="destructive"
+              onclick={handleFreezeClick}
+              disabled={isLocked}
+            ></lightning-button>
+          </template>
+        </div>
       </div>
+
+      <!-- ═══ CONFIRMATION DIALOG ═══ -->
+      <c-revt-confirmation-dialog
+        title={dialogTitle}
+        message={dialogMessage}
+        confirm-label={dialogConfirmLabel}
+        variant={dialogVariant}
+        show-partial-full-choice={dialogShowPartialFull}
+        onconfirm={handleDialogConfirm}
+        oncancel={handleDialogCancel}
+      ></c-revt-confirmation-dialog>
+
+      <!-- ═══ SAVING INDICATOR ═══ -->
+      <template lwc:if={isSaving}>
+        <div class="saving-overlay">
+          <lightning-spinner
+            alternative-text="Saving"
+            size="medium"
+          ></lightning-spinner>
+          <p class="slds-m-top_small slds-text-align_center">{savingMessage}</p>
+        </div>
+      </template>
     </div>
-
-    <!-- ═══ CONFIRMATION DIALOG ═══ -->
-    <c-revt-confirmation-dialog
-      title={dialogTitle}
-      message={dialogMessage}
-      confirm-label={dialogConfirmLabel}
-      variant={dialogVariant}
-      show-partial-full-choice={dialogShowPartialFull}
-      onconfirm={handleDialogConfirm}
-      oncancel={handleDialogCancel}
-    ></c-revt-confirmation-dialog>
-
-    <!-- ═══ SAVING INDICATOR ═══ -->
-    <template lwc:if={isSaving}>
-      <div class="saving-overlay">
-        <lightning-spinner
-          alternative-text="Saving"
-          size="medium"
-        ></lightning-spinner>
-        <p class="slds-m-top_small slds-text-align_center">{savingMessage}</p>
-      </div>
-    </template>
-  </div>
+  </template>
 </template>

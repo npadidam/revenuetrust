@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Stretch_Forecast_Label__c</fullName>
+    <label>Stretch Forecast Label</label>
+    <description
+  >Phase C: UI label for the Stretch Forecast number (sum of categories where Counts_Toward_Stretch__c = true).</description>
+    <inlineHelpText
+  >Label shown above the Stretch Forecast tile. Defaults to "Stretch Forecast".</inlineHelpText>
+    <type>Text</type>
+    <length>50</length>
+    <required>false</required>
+    <unique>false</unique>
+    <defaultValue>"Stretch Forecast"</defaultValue>
+</CustomField>

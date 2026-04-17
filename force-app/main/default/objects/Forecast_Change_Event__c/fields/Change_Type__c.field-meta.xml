@@ -32,6 +32,12 @@
         >false</default><label>Scope_Transfer</label></value>
             <value><fullName>Override_Created</fullName><default
         >false</default><label>Override_Created</label></value>
+            <value><fullName>Config_Change</fullName><default
+        >false</default><label>Config Change</label></value>
+            <value><fullName>Quota_Set</fullName><default>false</default><label
+        >Quota Set</label></value>
+            <value><fullName>Participant_Sync</fullName><default
+        >false</default><label>Participant Sync</label></value>
         </valueSetDefinition>
     </valueSet>
 </CustomField>

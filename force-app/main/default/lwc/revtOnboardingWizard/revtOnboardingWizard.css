@@ -1,0 +1,29 @@
+.wizard-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.wizard-header {
+  text-align: center;
+}
+
+.step-content {
+  min-height: 300px;
+  position: relative;
+}
+
+.wizard-nav {
+  border-top: 1px solid #e5e5e5;
+  padding-top: 12px;
+}
+
+.activating-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
+}

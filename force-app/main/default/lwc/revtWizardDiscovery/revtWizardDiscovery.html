@@ -1,0 +1,324 @@
+<template>
+  <!-- Step 1: Org Discovery -->
+  <template if:true={isStep1}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">Org Discovery</h2>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+      We've scanned your Salesforce org and found:
+    </p>
+    <template if:true={discovery}>
+      <div class="slds-grid slds-wrap slds-gutters_small">
+        <!-- Opportunity Stages -->
+        <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+          <div class={stagesCardClass}>
+            <h3 class="card-label">Opportunity Stages</h3>
+            <p class="card-value">{discovery.stages.length} stages</p>
+            <p class="card-detail">
+              Won: {wonStageNames} | Lost: {lostStageNames}
+            </p>
+            <template if:true={hasMultipleRecordTypes}>
+              <div
+                class="slds-m-top_x-small slds-border_top slds-p-top_x-small"
+              >
+                <p
+                  class="slds-text-title_caps slds-text-color_weak slds-m-bottom_xx-small"
+                >
+                  By Record Type
+                </p>
+                <template for:each={recordTypeStageRows} for:item="row">
+                  <div
+                    key={row.developerName}
+                    class="slds-grid slds-grid_align-spread slds-text-body_small"
+                  >
+                    <span>{row.name}</span>
+                    <span class="slds-text-color_weak"
+                      >{row.stageCount} stages</span
+                    >
+                  </div>
+                </template>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <!-- Hierarchy -->
+        <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+          <div class={hierarchyCardClass}>
+            <h3 class="card-label">Hierarchy</h3>
+            <p class="card-value">{discovery.roleCount} roles</p>
+            <p class="card-detail">{hierarchyDetail}</p>
+            <p class="slds-text-body_small slds-m-top_xx-small">
+              <strong>Source:</strong> {hierarchySourceLabel}
+            </p>
+          </div>
+        </div>
+
+        <!-- Users & Pipeline -->
+        <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+          <div class="disc-card conf-high">
+            <h3 class="card-label">Users & Pipeline</h3>
+            <p class="card-value">{discovery.activeUserCount} users</p>
+            <p class="card-detail">
+              {discovery.openPipelineCount} open opportunities
+            </p>
+            <p
+              class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small"
+            >
+              Excluding integration, security, community, and Chatter-only
+              users.
+            </p>
+          </div>
+        </div>
+
+        <!-- Currency -->
+        <div class="slds-col slds-size_1-of-2 slds-m-bottom_small">
+          <div class={currencyCardClass}>
+            <h3 class="card-label">Currency</h3>
+            <p class="card-value">{currencyLabel}</p>
+            <p class="card-detail">Fiscal year starts: {fiscalYearStartName}</p>
+            <p class="card-detail">
+              Corporate Currency: {corporateCurrencyValue}
+            </p>
+            <template if:false={discovery.isMultiCurrency}>
+              <p
+                class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small"
+              >
+                Multi-currency not enabled in this org.
+              </p>
+            </template>
+          </div>
+        </div>
+      </div>
+    </template>
+  </template>
+
+  <!-- Step 2: Hierarchy Source -->
+  <template if:true={isStep2}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+      Hierarchy Source
+    </h2>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+      How is your sales team organized?
+    </p>
+    <lightning-radio-group
+      label="Select hierarchy source"
+      options={hierarchyOptions}
+      value={wizardData.hierarchySource}
+      type="radio"
+      onchange={handleHierarchyChange}
+    ></lightning-radio-group>
+
+    <!-- Explanatory text per option -->
+    <div
+      class="slds-m-top_medium slds-box slds-theme_shade slds-text-body_small"
+    >
+      <template if:true={isOwnership}>
+        <p>
+          <strong>Role Hierarchy:</strong> Subordinates determined by Salesforce
+          Role Hierarchy. Managers see direct reports + their reports' reports
+          recursively. Most common choice.
+        </p>
+      </template>
+      <template if:true={isManagerChain}>
+        <p>
+          <strong>Manager Hierarchy:</strong> Use the standard
+          <code>User.ManagerId</code> field instead of Role Hierarchy. Best when
+          your org maintains manager relationships but not Role Hierarchy.
+        </p>
+      </template>
+      <template if:true={isTerritory}>
+        <p>
+          <strong>Territory Management:</strong> Use Salesforce Enterprise
+          Territory Management (Territory2). Forecasts roll up by territory
+          assignment.
+        </p>
+      </template>
+      <template if:true={isCustomField}>
+        <p>
+          <strong>Custom Field:</strong> Group by a custom Object + Field
+          combination. Specify the object and field below.
+        </p>
+      </template>
+    </div>
+
+    <!-- Custom Field inputs (Phase A) -->
+    <template if:true={isCustomField}>
+      <div class="slds-m-top_medium slds-box">
+        <h3 class="slds-text-title_bold slds-m-bottom_x-small">
+          Custom Field Configuration
+        </h3>
+        <div class="slds-grid slds-gutters">
+          <div class="slds-col slds-size_1-of-2">
+            <c-revt-multi-select
+              label="Object"
+              value={wizardData.scopeCustomObject}
+              options={scopeObjectOptions}
+              onchange={handleScopeObjectChange}
+              placeholder="Search objects..."
+              single-select
+            ></c-revt-multi-select>
+          </div>
+          <div class="slds-col slds-size_1-of-2">
+            <c-revt-multi-select
+              label="Field"
+              value={wizardData.scopeCustomField}
+              options={scopeFieldOptions}
+              onchange={handleScopeFieldChange}
+              placeholder="Search fields..."
+              single-select
+            ></c-revt-multi-select>
+          </div>
+        </div>
+        <p class="slds-text-body_small slds-text-color_weak slds-m-top_x-small">
+          The field on the selected object that determines which scope
+          (territory/region/etc.) each opportunity belongs to.
+        </p>
+      </div>
+    </template>
+  </template>
+
+  <!-- Step 3: Pipeline & Forecast Grouping (Phase B) -->
+  <template if:true={isStep3}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+      Pipeline & Forecast Grouping
+    </h2>
+
+    <!-- 3a. Optional Record Type filter (still applies as a pipeline narrow) -->
+    <template if:true={hasRecordTypes}>
+      <div class="slds-m-bottom_medium">
+        <lightning-checkbox-group
+          label="Include only these Opportunity Record Types in the forecast (leave all unchecked to include every record type)"
+          options={recordTypeOptions}
+          value={selectedRecordTypes}
+          onchange={handleRecordTypeChange}
+        ></lightning-checkbox-group>
+      </div>
+    </template>
+
+    <!-- 3b. Forecast grouping -->
+    <h3 class="slds-text-title_bold slds-m-top_medium slds-m-bottom_x-small">
+      How do you want to organize your forecasts?
+    </h3>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
+      A single forecast lumps all opportunities together. Separate forecasts
+      split opportunities into named groups.
+    </p>
+    <lightning-radio-group
+      label="Grouping mode"
+      variant="label-hidden"
+      options={groupingModeOptions}
+      value={groupingMode}
+      type="radio"
+      onchange={handleGroupingModeChange}
+    ></lightning-radio-group>
+
+    <!-- Custom Field grouping: pick object + field -->
+    <template if:true={isGroupingByCustomField}>
+      <div class="slds-grid slds-gutters slds-m-top_medium">
+        <div class="slds-col slds-size_1-of-2">
+          <c-revt-multi-select
+            label="Source Object"
+            value={wizardData.groupingSourceObject}
+            options={groupingObjectOptions}
+            onchange={handleGroupingObjectChange}
+            placeholder="Search objects..."
+            single-select
+          ></c-revt-multi-select>
+          <template if:true={isGroupingByChildField}>
+            <div class="slds-m-top_x-small">
+              <lightning-input
+                type="checkbox"
+                label="Show advanced (custom) child objects"
+                checked={showAdvancedChildObjects}
+                onchange={handleShowAdvancedToggle}
+              ></lightning-input>
+            </div>
+          </template>
+        </div>
+        <div class="slds-col slds-size_1-of-2">
+          <c-revt-multi-select
+            label="Grouping Field"
+            value={wizardData.groupingField}
+            options={groupingFieldOptions}
+            onchange={handleGroupingFieldChange}
+            placeholder="Search fields..."
+            single-select
+          ></c-revt-multi-select>
+        </div>
+      </div>
+    </template>
+
+    <!-- Per-group editor (RT or Custom Field modes) -->
+    <template if:false={isGroupingSingle}>
+      <div class="slds-m-top_medium">
+        <h4 class="slds-text-title_bold slds-m-bottom_x-small">
+          Define Groups
+        </h4>
+        <p
+          class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small"
+        >
+          Name each group and assign which records belong to it.
+        </p>
+        <template for:each={groups} for:item="g">
+          <div key={g._index} class="slds-box slds-m-bottom_x-small group-card">
+            <div class="slds-grid slds-gutters_xx-small slds-m-bottom_xx-small">
+              <div class="slds-col slds-size_4-of-12">
+                <lightning-input
+                  label="Group Name"
+                  value={g.name}
+                  data-index={g._index}
+                  onchange={handleGroupNameChange}
+                  placeholder="e.g., New Business + Amendments"
+                ></lightning-input>
+              </div>
+              <template if:true={g._isRT}>
+                <div class="slds-col slds-size_7-of-12">
+                  <lightning-checkbox-group
+                    label="Record Types in this group"
+                    options={g._recordTypeOptions}
+                    value={g.recordTypeNames}
+                    data-index={g._index}
+                    onchange={handleGroupRecordTypesChange}
+                  ></lightning-checkbox-group>
+                </div>
+              </template>
+              <template if:true={g._isCF}>
+                <div class="slds-col slds-size_7-of-12">
+                  <lightning-checkbox-group
+                    label="Field values in this group"
+                    options={g._fieldValueOptions}
+                    value={g.values}
+                    data-index={g._index}
+                    onchange={handleGroupValuesChange}
+                  ></lightning-checkbox-group>
+                </div>
+              </template>
+              <div
+                class="slds-col slds-size_1-of-12 slds-align-bottom slds-text-align_right"
+              >
+                <lightning-button-icon
+                  icon-name="utility:delete"
+                  variant="bare"
+                  alternative-text="Remove group"
+                  data-index={g._index}
+                  onclick={handleRemoveGroup}
+                ></lightning-button-icon>
+              </div>
+            </div>
+          </div>
+        </template>
+        <lightning-button
+          label="Add Group"
+          icon-name="utility:add"
+          variant="neutral"
+          onclick={handleAddGroup}
+          class="slds-m-top_x-small"
+        ></lightning-button>
+      </div>
+    </template>
+
+    <!-- Live preview -->
+    <p class="slds-text-body_small slds-text-color_weak slds-m-top_medium">
+      <strong>Preview:</strong> {groupingPreview}
+    </p>
+  </template>
+</template>

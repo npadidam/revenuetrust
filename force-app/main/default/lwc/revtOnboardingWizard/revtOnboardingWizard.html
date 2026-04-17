@@ -1,0 +1,138 @@
+<template>
+  <lightning-card>
+    <div class="wizard-container slds-p-around_medium">
+      <!-- Header -->
+      <div class="wizard-header slds-m-bottom_medium">
+        <h1 class="slds-text-heading_large">RevenueTrust Setup</h1>
+        <p
+          class="slds-text-body_small slds-text-color_weak slds-m-top_xx-small"
+        >
+          Estimated time: 5–10 minutes
+        </p>
+        <template if:true={isReconfigureMode}>
+          <div
+            class="slds-notify slds-notify_alert slds-alert_warning slds-m-top_small"
+            role="alert"
+          >
+            <lightning-icon
+              icon-name="utility:warning"
+              size="x-small"
+              class="slds-m-right_x-small"
+            ></lightning-icon>
+            You are reconfiguring an existing forecast. Changes may affect
+            existing data.
+          </div>
+        </template>
+      </div>
+
+      <!-- Progress indicator -->
+      <lightning-progress-indicator
+        current-step={currentStepValue}
+        type="base"
+        variant="base"
+      >
+        <template for:each={steps} for:item="s">
+          <lightning-progress-step
+            key={s.value}
+            label={s.label}
+            value={s.value}
+          ></lightning-progress-step>
+        </template>
+      </lightning-progress-indicator>
+
+      <!-- Step content -->
+      <div class="step-content slds-m-top_medium">
+        <template if:true={isLoading}>
+          <lightning-spinner
+            alternative-text="Loading"
+            size="medium"
+          ></lightning-spinner>
+        </template>
+
+        <!-- Steps 1-3: Discovery -->
+        <template if:true={showDiscovery}>
+          <c-revt-wizard-discovery
+            discovery={discovery}
+            current-step={currentStep}
+            wizard-data={wizardData}
+            onstepdatachange={handleStepDataChange}
+          ></c-revt-wizard-discovery>
+        </template>
+
+        <!-- Steps 4-6: Metrics & Categories -->
+        <template if:true={showMetricsCategories}>
+          <c-revt-wizard-metrics-categories
+            discovery={discovery}
+            current-step={currentStep}
+            wizard-data={wizardData}
+            onstepdatachange={handleStepDataChange}
+          ></c-revt-wizard-metrics-categories>
+        </template>
+
+        <!-- Steps 7-9: Settings -->
+        <template if:true={showSettings}>
+          <c-revt-wizard-settings
+            discovery={discovery}
+            current-step={currentStep}
+            wizard-data={wizardData}
+            onstepdatachange={handleStepDataChange}
+          ></c-revt-wizard-settings>
+        </template>
+
+        <!-- Steps 10-11: Activate -->
+        <template if:true={showActivate}>
+          <c-revt-wizard-activate
+            discovery={discovery}
+            current-step={currentStep}
+            wizard-data={wizardData}
+            onstepdatachange={handleStepDataChange}
+            onactivate={handleActivate}
+          ></c-revt-wizard-activate>
+        </template>
+      </div>
+
+      <!-- Navigation -->
+      <div
+        class="slds-grid slds-grid_align-spread slds-m-top_medium wizard-nav"
+      >
+        <lightning-button
+          label="Back"
+          onclick={handleBack}
+          disabled={isFirstStep}
+        ></lightning-button>
+        <div>
+          <template if:false={isLastStep}>
+            <lightning-button
+              label="Next"
+              variant="brand"
+              onclick={handleNext}
+            ></lightning-button>
+          </template>
+          <template if:true={isLastStep}>
+            <lightning-button
+              label="Activate Forecasting"
+              variant="success"
+              onclick={handleActivate}
+              disabled={isActivating}
+            ></lightning-button>
+          </template>
+        </div>
+      </div>
+
+      <!-- Activating overlay -->
+      <template if:true={isActivating}>
+        <div class="activating-overlay">
+          <lightning-spinner
+            alternative-text="Activating"
+            size="large"
+          ></lightning-spinner>
+          <p
+            class="slds-m-top_small slds-text-align_center slds-text-heading_small"
+          >
+            Setting up your forecast...
+          </p>
+        </div>
+      </template>
+    </div>
+  </lightning-card>
+</template>

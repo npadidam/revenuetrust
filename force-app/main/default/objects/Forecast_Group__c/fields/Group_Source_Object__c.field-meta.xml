@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Group_Source_Object__c</fullName>
+    <label>Group Source Object</label>
+    <description
+  >API name of the object holding the grouping field. e.g., Opportunity, OpportunityLineItem, SBQQ__QuoteLine__c, Product_Bookings__c. Only used when Group_Type = Custom_Field.</description>
+    <type>Text</type>
+    <length>100</length>
+    <required>false</required>
+    <unique>false</unique>
+</CustomField>

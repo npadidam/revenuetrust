@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Forecast_Group__c</fullName>
+    <label>Forecast Group</label>
+    <description
+  >Optional. When set, this quota applies to the specified group only. When null, this is a config-wide quota that applies to all groups (informational fallback). Resolution: group-specific quota wins; falls back to config-wide if no group quota.</description>
+    <referenceTo>Forecast_Group__c</referenceTo>
+    <relationshipName>Forecast_Quotas</relationshipName>
+    <relationshipLabel>Forecast Quotas</relationshipLabel>
+    <type>Lookup</type>
+    <required>false</required>
+    <deleteConstraint>SetNull</deleteConstraint>
+</CustomField>

@@ -1,0 +1,31 @@
+.disc-card {
+  border: 1px solid #e5e5e5;
+  border-radius: 8px;
+  padding: 12px 16px;
+  border-left: 4px solid #b0b0b0;
+}
+.conf-high {
+  border-left-color: #04844b;
+}
+.conf-review {
+  border-left-color: #f2cf00;
+}
+.conf-manual {
+  border-left-color: #ea001e;
+}
+.card-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  color: #706e6b;
+  font-weight: 600;
+}
+.card-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #080707;
+}
+.card-detail {
+  font-size: 0.75rem;
+  color: #706e6b;
+  margin-top: 2px;
+}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Effective_Value__c</fullName>
+    <label>Effective Value</label>
+    <type>Currency</type>
+    <formula
+  >IF(Override_Value__c != null, Override_Value__c, Computed_Value__c)</formula>
+    <formulaTreatBlanksAs>BlankAsZero</formulaTreatBlanksAs>
+    <precision>18</precision>
+    <scale>2</scale>
+</CustomField>

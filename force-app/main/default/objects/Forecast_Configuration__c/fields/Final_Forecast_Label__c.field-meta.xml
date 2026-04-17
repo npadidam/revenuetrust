@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Final_Forecast_Label__c</fullName>
+    <label>Final Forecast Label</label>
+    <description
+  >Phase C: UI label for the Final Forecast number (sum of categories where Counts_Toward_Target__c = true).</description>
+    <inlineHelpText
+  >Label shown above the Final Forecast tile. Defaults to "Final Forecast".</inlineHelpText>
+    <type>Text</type>
+    <length>50</length>
+    <required>false</required>
+    <unique>false</unique>
+    <defaultValue>"Final Forecast"</defaultValue>
+</CustomField>

@@ -82,6 +82,7 @@ public with sharing class ForecastService {
         cDto.apiName = c.Category_API_Name__c;
         cDto.color = c.Color_Hex__c;
         cDto.countsTowardTarget = c.Counts_Toward_Target__c;
+        cDto.countsTowardStretch = c.Counts_Toward_Stretch__c;
         cDto.isTerminal = c.Is_Terminal__c;
         cDto.isHighConfidence = c.Is_High_Confidence__c;
         cDto.isRegression = c.Regression_Warning__c;
@@ -93,9 +94,15 @@ public with sharing class ForecastService {
       }
     }
 
-    // Load periods (Open + Scheduled)
+    // Load periods. Phase C: include the most recent N closed periods
+    // (config.Past_Periods_Visible__c, default 2) so the period picker can
+    // surface historical periods for read-only review.
     dto.periods = new List<ForecastController.ForecastPeriodDTO>();
-    List<Forecast_Period__c> periods = [
+    Integer pastN = config != null &&
+      config.Past_Periods_Visible__c != null
+      ? config.Past_Periods_Visible__c.intValue()
+      : 2;
+    List<Forecast_Period__c> openOrScheduled = [
       SELECT
         Id,
         Name,
@@ -108,6 +115,30 @@ public with sharing class ForecastService {
       WHERE Status__c IN ('Open', 'Scheduled')
       ORDER BY Start_Date__c ASC
     ];
+    List<Forecast_Period__c> closedRecent = pastN > 0
+      ? [
+          SELECT
+            Id,
+            Name,
+            Start_Date__c,
+            End_Date__c,
+            Status__c,
+            Period_Type__c,
+            Budget_Mode__c
+          FROM Forecast_Period__c
+          WHERE Status__c = 'Closed'
+          ORDER BY Start_Date__c DESC
+          LIMIT :pastN
+        ]
+      : new List<Forecast_Period__c>();
+    // Reverse closedRecent so the picker shows them oldest-first
+    List<Forecast_Period__c> closedAsc = new List<Forecast_Period__c>();
+    for (Integer i = closedRecent.size() - 1; i >= 0; i--) {
+      closedAsc.add(closedRecent[i]);
+    }
+    List<Forecast_Period__c> periods = new List<Forecast_Period__c>();
+    periods.addAll(closedAsc);
+    periods.addAll(openOrScheduled);
     for (Forecast_Period__c p : periods) {
       dto.periods.add(mapPeriodDTO(p));
     }
@@ -144,6 +175,60 @@ public with sharing class ForecastService {
       ? config.Pagination_Size__c.intValue()
       : 40;
     dto.hierarchySource = config.Scope_Determination__c;
+
+    // Phase C: horizon defaults + Final/Stretch labels for the toolbar / summary cards
+    dto.defaultHorizon = String.isNotBlank(config.Default_Horizon__c)
+      ? config.Default_Horizon__c
+      : 'Current_Period';
+    dto.customHorizonPeriods = config.Custom_Horizon_Periods__c != null
+      ? config.Custom_Horizon_Periods__c.intValue()
+      : null;
+    dto.pastPeriodsVisible = config.Past_Periods_Visible__c != null
+      ? config.Past_Periods_Visible__c.intValue()
+      : 2;
+    dto.finalForecastLabel = String.isNotBlank(config.Final_Forecast_Label__c)
+      ? config.Final_Forecast_Label__c
+      : 'Final Forecast';
+    dto.stretchForecastLabel = String.isNotBlank(
+        config.Stretch_Forecast_Label__c
+      )
+      ? config.Stretch_Forecast_Label__c
+      : 'Stretch Forecast';
+
+    // Phase D: Load display fields
+    dto.displayFields = new List<ForecastController.DisplayFieldDTO>();
+    List<Forecast_Display_Field__c> dfs = [
+      SELECT
+        Id,
+        Field_Label__c,
+        Object_API_Name__c,
+        Field_API_Name__c,
+        Field_Type__c,
+        Display_Location__c,
+        Sort_Order__c,
+        Column_Width__c,
+        Is_Active__c,
+        Is_System__c
+      FROM Forecast_Display_Field__c
+      WHERE Forecast_Configuration__c = :config.Id AND Is_Active__c = TRUE
+      ORDER BY Sort_Order__c ASC
+    ];
+    for (Forecast_Display_Field__c df : dfs) {
+      ForecastController.DisplayFieldDTO dfDto = new ForecastController.DisplayFieldDTO();
+      dfDto.fieldId = df.Id;
+      dfDto.fieldLabel = df.Field_Label__c;
+      dfDto.objectApiName = df.Object_API_Name__c;
+      dfDto.fieldApiName = df.Field_API_Name__c;
+      dfDto.fieldType = df.Field_Type__c;
+      dfDto.displayLocation = df.Display_Location__c;
+      dfDto.sortOrder = df.Sort_Order__c != null
+        ? df.Sort_Order__c.intValue()
+        : 0;
+      dfDto.columnWidth = df.Column_Width__c;
+      dfDto.isActive = df.Is_Active__c;
+      dfDto.isSystem = df.Is_System__c;
+      dto.displayFields.add(dfDto);
+    }
 
     return dto;
   }
@@ -363,6 +448,18 @@ public with sharing class ForecastService {
       return result;
     }
 
+    // 1b. Phase B: filter to the requested group's membership.
+    // When request.groupId is null OR group is "All", no filter applies.
+    pipelineRecords = filterPipelineByGroup(pipelineRecords, request.groupId);
+
+    if (pipelineRecords.isEmpty()) {
+      result.totalCount = 0;
+      result.totalUnfilteredCount = 0;
+      result.pageNumber = 1;
+      result.pageSize = request.pageSize != null ? request.pageSize : 40;
+      return result;
+    }
+
     result.totalUnfilteredCount = pipelineRecords.size();
 
     // 2. LEFT JOIN to Forecast_Override__c
@@ -499,6 +596,18 @@ public with sharing class ForecastService {
       dedupFactors = computeDedupFactors(recordIds, request.periodId);
     }
 
+    // 4d. Phase B: Child-object metric rollup pre-pass.
+    // For metrics where Source_Object__c != 'Opportunity' (or null), aggregate the
+    // amount field from the child object (OpportunityLineItem, custom child, etc.)
+    // grouped by parent Opportunity Id. Inject results into per-record metric values
+    // when no override exists (CRM defaults), preserving override values when set.
+    Map<Id, Map<String, Decimal>> childMetricValuesByOpp = computeChildObjectMetricValues(
+      recordIds
+    );
+
+    // Phase D: Load config DTO for display field population
+    ForecastController.ForecastConfigDTO configDto = loadConfig();
+
     // 5. Build record DTOs
     List<ForecastController.ForecastRecordDTO> allRecords = new List<ForecastController.ForecastRecordDTO>();
 
@@ -574,6 +683,24 @@ public with sharing class ForecastService {
           dto.metricValues.put('metric_1', 0);
         } else {
           dto.metricValues.put('metric_1', dto.crmAmount);
+        }
+      }
+
+      // Phase B: Inject child-object-sourced metric values where the override
+      // hasn't supplied a value (or no override exists). Override values always win.
+      Map<String, Decimal> childVals = childMetricValuesByOpp.get(rec.Id);
+      if (childVals != null) {
+        for (String mKey : childVals.keySet()) {
+          Decimal childVal = childVals.get(mKey);
+          if (childVal == null) {
+            continue;
+          }
+          Decimal existing = dto.metricValues.containsKey(mKey)
+            ? dto.metricValues.get(mKey)
+            : null;
+          if (existing == null || existing == 0) {
+            dto.metricValues.put(mKey, childVal);
+          }
         }
       }
 
@@ -665,6 +792,83 @@ public with sharing class ForecastService {
         }
       }
 
+      // Phase D: Populate display field values
+      dto.displayFieldValues = new Map<String, Object>();
+      if (configDto != null && configDto.displayFields != null) {
+        // Build a relationship map once (outside the display field loop)
+        Map<String, Schema.SObjectField> oppFieldMap = Opportunity.SObjectType.getDescribe()
+          .fields.getMap();
+
+        for (ForecastController.DisplayFieldDTO df : configDto.displayFields) {
+          // Use a composite key that the LWC can match: objectApiName + '.' + fieldApiName
+          // For Opportunity fields, key = fieldApiName (e.g., 'StageName')
+          // For parent fields, key = objectApiName + '.' + fieldApiName (e.g., 'Account.Name')
+          String displayKey = df.objectApiName == 'Opportunity'
+            ? df.fieldApiName
+            : df.objectApiName + '.' + df.fieldApiName;
+          try {
+            if (df.objectApiName == 'Opportunity') {
+              Object val = rec.get(df.fieldApiName);
+              // For lookup fields, resolve to the related record's Name
+              if (
+                df.fieldType == 'Lookup' &&
+                oppFieldMap.containsKey(df.fieldApiName.toLowerCase())
+              ) {
+                Schema.DescribeFieldResult fDesc = oppFieldMap.get(
+                    df.fieldApiName.toLowerCase()
+                  )
+                  .getDescribe();
+                if (fDesc.getType() == Schema.DisplayType.REFERENCE) {
+                  String relName = fDesc.getRelationshipName();
+                  if (relName != null) {
+                    try {
+                      SObject related = rec.getSObject(relName);
+                      if (related != null) {
+                        val = related.get('Name');
+                      }
+                    } catch (Exception ex) {
+                      /* relationship not queried */
+                    }
+                  }
+                }
+              }
+              dto.displayFieldValues.put(displayKey, val);
+            } else {
+              // Parent object field (e.g., Account.Name, Campaign.Name)
+              for (Schema.SObjectField oppF : oppFieldMap.values()) {
+                Schema.DescribeFieldResult fDesc = oppF.getDescribe();
+                if (fDesc.getType() != Schema.DisplayType.REFERENCE) {
+                  continue;
+                }
+                List<Schema.SObjectType> refs = fDesc.getReferenceTo();
+                if (
+                  !refs.isEmpty() &&
+                  refs[0].getDescribe().getName() == df.objectApiName
+                ) {
+                  String relName = fDesc.getRelationshipName();
+                  if (relName != null) {
+                    try {
+                      SObject parent = rec.getSObject(relName);
+                      if (parent != null) {
+                        dto.displayFieldValues.put(
+                          displayKey,
+                          parent.get(df.fieldApiName)
+                        );
+                      }
+                    } catch (Exception ex) {
+                      /* relationship not queried */
+                    }
+                  }
+                  break;
+                }
+              }
+            }
+          } catch (Exception e) {
+            // Field not in query result — skip
+          }
+        }
+      }
+
       allRecords.add(dto);
     }
 
@@ -697,12 +901,80 @@ public with sharing class ForecastService {
       }
     }
 
-    // 8. Compute summary totals
+    // 8. Compute summary totals — Phase B passes groupId for group-aware quota resolution
     result.summary = computeSummaryFromRecords(
       allRecords,
       request.participantId,
-      request.periodId
+      request.periodId,
+      request.groupId
     );
+
+    // Phase C: Final / Stretch totals + UI labels (added to summary regardless of horizon)
+    populateFinalAndStretchTotals(result.summary, allRecords);
+
+    // Phase D: Merge summary overrides into category totals
+    try {
+      Map<String, Forecast_Summary__c> summaries = ForecastSummaryService.getSummariesByCategory(
+        request.participantId,
+        request.periodId
+      );
+      if (!summaries.isEmpty()) {
+        Map<String, ForecastController.SummaryOverrideDTO> overrides = new Map<String, ForecastController.SummaryOverrideDTO>();
+        for (String cat : summaries.keySet()) {
+          Forecast_Summary__c fs = summaries.get(cat);
+          ForecastController.SummaryOverrideDTO dto = new ForecastController.SummaryOverrideDTO();
+          dto.summaryId = fs.Id;
+          dto.computedValue = fs.Computed_Value__c;
+          dto.overrideValue = fs.Override_Value__c;
+          dto.effectiveValue = fs.Override_Value__c != null
+            ? fs.Override_Value__c
+            : fs.Computed_Value__c;
+          dto.overrideByName = fs.Override_By__r?.Name;
+          dto.overrideDate = fs.Override_Date__c;
+          dto.overrideNotes = fs.Override_Notes__c;
+          dto.isStale = false; // Will be enhanced later
+          overrides.put(cat, dto);
+          // If override exists, apply it to category totals
+          if (
+            fs.Override_Value__c != null &&
+            result.summary.categoryTotals != null
+          ) {
+            result.summary.categoryTotals.put(cat, fs.Override_Value__c);
+          }
+        }
+        result.summary.categoryOverrides = overrides;
+      }
+    } catch (Exception e) {
+      // Non-critical — summaries are supplementary
+      System.debug('Summary override merge failed: ' + e.getMessage());
+    }
+
+    // Phase C: horizon \u2014 multi-period views are read-only summary mode.
+    // The base query already runs against request.periodId; for multi-period we
+    // aggregate additional periods' records into the summary's category totals
+    // and mark the response read-only. The grid still displays the current
+    // period's rows so users can see what they'll be working with when they
+    // switch back to Current Period.
+    String resolvedHorizon = resolveHorizon(request.horizon);
+    Integer extraPeriodsForward = horizonForwardPeriodCount(resolvedHorizon);
+    if (extraPeriodsForward > 0) {
+      result.readOnly = true;
+      try {
+        aggregateAdditionalPeriodsIntoSummary(
+          result.summary,
+          request,
+          extraPeriodsForward
+        );
+      } catch (Exception ex) {
+        // Aggregation is best-effort; never break the forecast load over horizon issues.
+        System.debug(
+          LoggingLevel.WARN,
+          'Multi-period aggregation failed: ' + ex.getMessage()
+        );
+      }
+    } else {
+      result.readOnly = false;
+    }
 
     return result;
   }
@@ -761,6 +1033,14 @@ public with sharing class ForecastService {
         request.periodId
       );
 
+      // Phase B: Resolve default Forecast_Group__c for new overrides.
+      // Until LWC group selection lands (Phase B-4), every new override is scoped
+      // to the active config's first group ("All Opportunities" by default).
+      Forecast_Configuration__c activeConfig = ForecastDataService.getActiveConfig();
+      Id defaultGroupId = activeConfig != null
+        ? getDefaultGroupId(activeConfig.Id)
+        : null;
+
       // 2. Process each override DTO
       List<Forecast_Override__c> toInsert = new List<Forecast_Override__c>();
       List<Forecast_Override__c> toUpdate = new List<Forecast_Override__c>();
@@ -779,6 +1059,7 @@ public with sharing class ForecastService {
           newOv.Forecast_Category__c = dto.category;
           newOv.Close_Date_Override__c = dto.closeDateOverride;
           newOv.Comment__c = dto.comment;
+          newOv.Forecast_Group__c = defaultGroupId; // Phase B: always concrete group
           setMetricValues(newOv, dto.metricValues);
 
           // §11.3e — Resolve Previous_Level_Override
@@ -1031,6 +1312,29 @@ public with sharing class ForecastService {
 
       insert snapshot;
       result.snapshotId = snapshot.Id;
+
+      // Phase D: Persist summaries + mark submitted + create Submit history
+      try {
+        Forecast_Configuration__c activeConfig = ForecastDataService.getActiveConfig();
+        List<Forecast_Summary__c> summaries = ForecastSummaryService.computeAndPersistSummaries(
+          request.participantId,
+          request.periodId,
+          activeConfig.Id
+        );
+        // Mark all summaries as submitted
+        for (Forecast_Summary__c s : summaries) {
+          s.Is_Submitted__c = true;
+        }
+        if (!summaries.isEmpty()) {
+          update summaries;
+          ForecastSummaryService.persistSummaryHistory(summaries, 'Submit');
+        }
+      } catch (Exception ex) {
+        // Non-critical — submission succeeds even if summary persistence fails
+        System.debug(
+          'Summary persistence on submit failed: ' + ex.getMessage()
+        );
+      }
 
       // 4. Update participant status to 'Submitted'
       Forecast_Participant__c participant = [
@@ -1367,6 +1671,7 @@ public with sharing class ForecastService {
           newOv.Status__c = 'Saved';
           newOv.Saved_On__c = Datetime.now();
           newOv.Previous_Level_Override__c = prevOv.Id;
+          newOv.Forecast_Group__c = prevOv.Forecast_Group__c; // Phase B
           newOv.Exchange_Rate__c = getExchangeRate(prevOv.Opportunity__c);
           computeLocalCurrencyValues(newOv);
           toInsert.add(newOv);
@@ -1520,6 +1825,7 @@ public with sharing class ForecastService {
           newOv.Status__c = 'Saved';
           newOv.Saved_On__c = Datetime.now();
           newOv.Previous_Period_Override__c = prevOv.Id;
+          newOv.Forecast_Group__c = prevOv.Forecast_Group__c; // Phase B
           newOv.Exchange_Rate__c = getExchangeRate(prevOv.Opportunity__c);
           computeLocalCurrencyValues(newOv);
           toInsert.add(newOv);
@@ -1872,7 +2178,11 @@ public with sharing class ForecastService {
     // Build DTO
     ForecastController.ForecastRecordDTO dto = new ForecastController.ForecastRecordDTO();
     dto.recordId = opportunityId;
-    dto.recordName = String.valueOf(pipelineRecord.get('Name'));
+    try {
+      dto.recordName = (String) pipelineRecord.get('Name');
+    } catch (Exception ex) {
+      dto.recordName = String.valueOf(opportunityId);
+    }
     dto.stage = PipelineObjectService.getStage(pipelineRecord);
     dto.closeDate = PipelineObjectService.getCloseDate(pipelineRecord);
     dto.crmAmount = PipelineObjectService.getAmount(pipelineRecord);
@@ -2357,9 +2667,26 @@ public with sharing class ForecastService {
   }
 
   /**
-   * @description Query Quota__c for attainment data.
+   * @description Load attainment data from configured source.
+   *              Supports three attainment sources:
+   *              - Quota_Record: Incentives Quota__c (target + achieved from commission engine)
+   *              - Forecast_Quota_With_Live: Forecast_Quota__c target + live closed-won achieved
+   *              - Incentives_Quota_With_Live: Incentives Quota__c target + live closed-won achieved
    */
   private static AttainmentData loadAttainmentData(Id userId, Id periodId) {
+    return loadAttainmentData(userId, periodId, null);
+  }
+
+  /**
+   * @description Phase B: Group-aware overload. Resolves quota using group-specific
+   *              quota first, then falls back to config-wide. groupId == null behaves
+   *              identically to the legacy method.
+   */
+  private static AttainmentData loadAttainmentData(
+    Id userId,
+    Id periodId,
+    Id groupId
+  ) {
     AttainmentData data = new AttainmentData();
 
     // Check config for attainment source
@@ -2367,40 +2694,121 @@ public with sharing class ForecastService {
     String source = config != null &&
       config.Attainment_Source__c != null
       ? config.Attainment_Source__c
-      : 'Quota_Record';
+      : 'Forecast_Quota_With_Live';
 
-    Boolean useQuota = (source == 'Quota_Record' || source == 'Hybrid');
-    Boolean useLive = (source == 'Live_From_Forecast' || source == 'Hybrid');
-
-    // Source 1: Quota record (from Incentives module)
-    if (useQuota) {
-      List<Comp_Plan__c> plans = [
-        SELECT Id
-        FROM Comp_Plan__c
-        WHERE Sales_Rep__c = :userId AND Status__c = 'Active'
-        LIMIT 1
-      ];
-
-      if (!plans.isEmpty()) {
-        List<Quota__c> quotas = [
-          SELECT Id, Target_Amount__c, Achieved_Amount__c
-          FROM Quota__c
-          WHERE Comp_Plan__c = :plans[0].Id AND Status__c = 'Active'
-          LIMIT 1
-        ];
-
-        if (!quotas.isEmpty()) {
-          Quota__c q = quotas[0];
-          data.target = q.Target_Amount__c != null ? q.Target_Amount__c : 0;
-          data.achieved = q.Achieved_Amount__c != null
-            ? q.Achieved_Amount__c
-            : 0;
-        }
+    if (source == 'Quota_Record') {
+      // Both target + achieved from Incentives module
+      data.target = loadIncentiveQuotaTarget(userId, periodId);
+      data.achieved = loadIncentiveQuotaAchieved(userId, periodId);
+    } else if (source == 'Forecast_Quota_With_Live') {
+      // Phase B: group-aware quota resolution (group-specific wins, then config-wide)
+      Forecast_Quota__c fq = ForecastDataService.getForecastQuota(
+        userId,
+        periodId,
+        groupId
+      );
+      if (fq != null && fq.Target_Amount__c != null) {
+        data.target = fq.Target_Amount__c;
       }
+      data.achieved = computeLiveClosedWon(userId, periodId);
+    } else if (source == 'Incentives_Quota_With_Live') {
+      // Target from Incentives Quota, achieved from live closed-won opps
+      data.target = loadIncentiveQuotaTarget(userId, periodId);
+      data.achieved = computeLiveClosedWon(userId, periodId);
     }
 
-    // Source 2: Live from Closed Won overrides in this period
-    if (useLive && (data.achieved == 0 || source == 'Live_From_Forecast')) {
+    // Compute attainment %
+    data.attainmentPct = data.target > 0
+      ? (data.achieved / data.target) * 100
+      : 0;
+
+    return data;
+  }
+
+  /**
+   * @description Load target amount from Incentives Quota__c via Comp_Plan__c.
+   */
+  private static Decimal loadIncentiveQuotaTarget(Id userId, Id periodId) {
+    List<Comp_Plan__c> plans = [
+      SELECT Id
+      FROM Comp_Plan__c
+      WHERE Sales_Rep__c = :userId AND Status__c = 'Active'
+      LIMIT 1
+    ];
+    if (plans.isEmpty()) {
+      return 0;
+    }
+    List<Quota__c> quotas = [
+      SELECT Target_Amount__c
+      FROM Quota__c
+      WHERE Comp_Plan__c = :plans[0].Id AND Status__c = 'Active'
+      LIMIT 1
+    ];
+    if (quotas.isEmpty() || quotas[0].Target_Amount__c == null) {
+      return 0;
+    }
+    return quotas[0].Target_Amount__c;
+  }
+
+  /**
+   * @description Load achieved amount from Incentives Quota__c.
+   */
+  private static Decimal loadIncentiveQuotaAchieved(Id userId, Id periodId) {
+    List<Comp_Plan__c> plans = [
+      SELECT Id
+      FROM Comp_Plan__c
+      WHERE Sales_Rep__c = :userId AND Status__c = 'Active'
+      LIMIT 1
+    ];
+    if (plans.isEmpty()) {
+      return 0;
+    }
+    List<Quota__c> quotas = [
+      SELECT Achieved_Amount__c
+      FROM Quota__c
+      WHERE Comp_Plan__c = :plans[0].Id AND Status__c = 'Active'
+      LIMIT 1
+    ];
+    if (quotas.isEmpty() || quotas[0].Achieved_Amount__c == null) {
+      return 0;
+    }
+    return quotas[0].Achieved_Amount__c;
+  }
+
+  /**
+   * @description Sum the Amount of closed-won pipeline records owned by a user
+   *              within a forecast period. Uses PipelineObjectService for
+   *              dynamic field/object resolution.
+   */
+  private static Decimal computeLiveClosedWon(Id userId, Id periodId) {
+    Forecast_Period__c period = [
+      SELECT Id, Start_Date__c, End_Date__c
+      FROM Forecast_Period__c
+      WHERE Id = :periodId
+      LIMIT 1
+    ];
+    if (period == null || period.Start_Date__c == null) {
+      return 0;
+    }
+
+    String pipelineObj = PipelineObjectService.getPipelineObjectName();
+    Date startDate = period.Start_Date__c;
+    Date endDate = period.End_Date__c;
+
+    // Use IsClosed=true AND IsWon=true for Opportunity (standard fields)
+    String query =
+      'SELECT SUM(Amount) closedTotal FROM ' +
+      pipelineObj +
+      ' WHERE OwnerId = :userId' +
+      ' AND IsWon = true AND IsClosed = true' +
+      ' AND CloseDate >= :startDate AND CloseDate <= :endDate';
+    try {
+      AggregateResult[] aggs = Database.query(query);
+      if (!aggs.isEmpty() && aggs[0].get('closedTotal') != null) {
+        return (Decimal) aggs[0].get('closedTotal');
+      }
+    } catch (Exception e) {
+      // Object may not have IsWon/IsClosed (e.g., custom pipeline) — fall back to overrides
       AggregateResult[] aggs = [
         SELECT SUM(Metric_1_Value__c) closedTotal
         FROM Forecast_Override__c
@@ -2410,22 +2818,10 @@ public with sharing class ForecastService {
           AND Forecast_Category__c = 'Closed_Won'
       ];
       if (!aggs.isEmpty() && aggs[0].get('closedTotal') != null) {
-        Decimal liveAchieved = (Decimal) aggs[0].get('closedTotal');
-        if (source == 'Live_From_Forecast') {
-          data.achieved = liveAchieved;
-        } else {
-          // Hybrid: use live if quota achieved is 0
-          data.achieved = liveAchieved;
-        }
+        return (Decimal) aggs[0].get('closedTotal');
       }
     }
-
-    // Compute attainment %
-    data.attainmentPct = data.target > 0
-      ? (data.achieved / data.target) * 100
-      : 0;
-
-    return data;
+    return 0;
   }
 
   /**
@@ -2494,6 +2890,540 @@ public with sharing class ForecastService {
     values.put('metric_1', ov.Metric_1_Local__c);
     values.put('metric_2', ov.Metric_2_Local__c);
     return values;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  CHILD OBJECT METRIC ROLLUP (Phase B)
+  // ══════════════════════════════════════════════════════════════════════
+
+  /**
+   * @description Build a map of OpportunityId → metric_N → aggregated Decimal value
+   *              for any Forecast_Metric__c whose Source_Object__c references a
+   *              child object (OpportunityLineItem, custom, etc.). Bulkifies queries
+   *              by grouping metrics that share the same (object, lookup, field, agg)
+   *              combination so we run one aggregate query per unique combination.
+   *
+   *              Uses ChildObjectQueryService for sanitization, FLS, and chunking.
+   *              Silently returns empty map for any metric that errors (e.g., FLS
+   *              denied, field renamed) — the UI shows the override value or null.
+   */
+  private static Map<Id, Map<String, Decimal>> computeChildObjectMetricValues(
+    Set<Id> oppIds
+  ) {
+    Map<Id, Map<String, Decimal>> result = new Map<Id, Map<String, Decimal>>();
+    if (oppIds == null || oppIds.isEmpty()) {
+      return result;
+    }
+
+    Forecast_Configuration__c config = ForecastDataService.getActiveConfig();
+    if (config == null || config.Forecast_Metrics__r == null) {
+      return result;
+    }
+
+    // Load filters per metric in one query
+    Map<Id, List<Forecast_Metric_Filter__c>> filtersByMetric = loadMetricFilters(
+      config.Forecast_Metrics__r
+    );
+
+    for (Forecast_Metric__c metric : config.Forecast_Metrics__r) {
+      String sourceObj = metric.Source_Object__c;
+      if (
+        String.isBlank(sourceObj) || sourceObj.equalsIgnoreCase('Opportunity')
+      ) {
+        continue; // Opportunity-sourced metrics use Amount/override directly
+      }
+      String lookupField = metric.Source_Lookup_Field__c;
+      String amountField = metric.Source_Field__c;
+      String aggregation = String.isNotBlank(metric.Aggregation__c)
+        ? metric.Aggregation__c
+        : 'Sum';
+      if (String.isBlank(lookupField) || String.isBlank(amountField)) {
+        continue;
+      }
+
+      Integer sortOrder = metric.Sort_Order__c != null
+        ? metric.Sort_Order__c.intValue()
+        : 1;
+      String mKey = 'metric_' + sortOrder;
+
+      try {
+        Map<Id, Decimal> aggResult = ChildObjectQueryService.aggregate(
+          sourceObj,
+          lookupField,
+          amountField,
+          aggregation,
+          oppIds,
+          filtersByMetric.get(metric.Id)
+        );
+        for (Id oppId : aggResult.keySet()) {
+          if (!result.containsKey(oppId)) {
+            result.put(oppId, new Map<String, Decimal>());
+          }
+          result.get(oppId).put(mKey, aggResult.get(oppId));
+        }
+      } catch (Exception ex) {
+        // Don't break the whole forecast load on a single bad metric configuration.
+        System.debug(
+          LoggingLevel.WARN,
+          'Child metric rollup failed for metric ' +
+            metric.Id +
+            ': ' +
+            ex.getMessage()
+        );
+      }
+    }
+    return result;
+  }
+
+  /**
+   * @description Load all Forecast_Metric_Filter__c records for the given metrics
+   *              in one SOQL query, grouped by parent metric Id.
+   */
+  private static Map<Id, List<Forecast_Metric_Filter__c>> loadMetricFilters(
+    List<Forecast_Metric__c> metrics
+  ) {
+    Map<Id, List<Forecast_Metric_Filter__c>> byMetric = new Map<Id, List<Forecast_Metric_Filter__c>>();
+    if (metrics == null || metrics.isEmpty()) {
+      return byMetric;
+    }
+    Set<Id> metricIds = new Set<Id>();
+    for (Forecast_Metric__c m : metrics) {
+      metricIds.add(m.Id);
+    }
+
+    for (Forecast_Metric_Filter__c f : [
+      SELECT
+        Id,
+        Forecast_Metric__c,
+        Field_API_Name__c,
+        Operator__c,
+        Value__c,
+        Logical_Operator__c,
+        Sort_Order__c,
+        Validation_Status__c
+      FROM Forecast_Metric_Filter__c
+      WHERE Forecast_Metric__c IN :metricIds
+      ORDER BY Sort_Order__c ASC
+    ]) {
+      if (!byMetric.containsKey(f.Forecast_Metric__c)) {
+        byMetric.put(
+          f.Forecast_Metric__c,
+          new List<Forecast_Metric_Filter__c>()
+        );
+      }
+      byMetric.get(f.Forecast_Metric__c).add(f);
+    }
+    return byMetric;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  GROUP CONTEXT (Phase B)
+  // ══════════════════════════════════════════════════════════════════════
+
+  /**
+   * @description Cache of default group Id per config Id. Avoids repeated SOQL
+   *              within a single transaction.
+   */
+  private static Map<Id, Id> defaultGroupIdCache = new Map<Id, Id>();
+
+  /**
+   * @description Return the default Forecast_Group__c Id for a given config.
+   *              Used by saveOverrides to set Forecast_Group__c when the LWC
+   *              hasn't supplied a group context yet (Phase B-4 will).
+   *              Resolution order: first active group sorted by Sort_Order ASC.
+   *              Returns null if no group exists (legacy / not yet seeded).
+   */
+  public static Id getDefaultGroupId(Id configId) {
+    if (configId == null) {
+      return null;
+    }
+    if (defaultGroupIdCache.containsKey(configId)) {
+      return defaultGroupIdCache.get(configId);
+    }
+    Id groupId = null;
+    List<Forecast_Group__c> groups = [
+      SELECT Id
+      FROM Forecast_Group__c
+      WHERE Forecast_Configuration__c = :configId AND Is_Active__c = TRUE
+      ORDER BY Sort_Order__c ASC, CreatedDate ASC
+      LIMIT 1
+    ];
+    if (!groups.isEmpty()) {
+      groupId = groups[0].Id;
+    }
+    defaultGroupIdCache.put(configId, groupId);
+    return groupId;
+  }
+
+  @TestVisible
+  private static void clearDefaultGroupCache() {
+    defaultGroupIdCache = new Map<Id, Id>();
+  }
+
+  /**
+   * @description Phase B: filter the anchor Opportunity list down to those that
+   *              belong to the specified group. When groupId is null or the group
+   *              is type 'All', returns the input list unchanged.
+   *              - 'Record_Type'  → keep opps whose RecordType.DeveloperName is in the group's list
+   *              - 'Custom_Field' on Opportunity → keep opps where the field value is in the group's list
+   *              - 'Custom_Field' on a child object → keep opps that have at least one matching child row
+   */
+  private static List<SObject> filterPipelineByGroup(
+    List<SObject> pipelineRecords,
+    Id groupId
+  ) {
+    if (
+      groupId == null ||
+      pipelineRecords == null ||
+      pipelineRecords.isEmpty()
+    ) {
+      return pipelineRecords;
+    }
+    Forecast_Group__c grp;
+    try {
+      grp = [
+        SELECT
+          Id,
+          Group_Type__c,
+          Record_Type_Names__c,
+          Group_Source_Object__c,
+          Group_Lookup_Field__c,
+          Group_Field__c,
+          Group_Field_Values__c
+        FROM Forecast_Group__c
+        WHERE Id = :groupId
+        LIMIT 1
+      ];
+    } catch (Exception ex) {
+      return pipelineRecords;
+    }
+    if (grp == null || grp.Group_Type__c == 'All') {
+      return pipelineRecords;
+    }
+
+    if (grp.Group_Type__c == 'Record_Type') {
+      Set<String> rtNames = csvToSet(grp.Record_Type_Names__c);
+      if (rtNames.isEmpty()) {
+        return pipelineRecords;
+      }
+      List<SObject> kept = new List<SObject>();
+      for (SObject rec : pipelineRecords) {
+        try {
+          SObject rt = rec.getSObject('RecordType');
+          if (rt != null) {
+            String devName = (String) rt.get('DeveloperName');
+            if (rtNames.contains(devName)) {
+              kept.add(rec);
+            }
+          }
+        } catch (Exception ex) {
+          // Pipeline didn't include RecordType; skip filter for this row
+          kept.add(rec);
+        }
+      }
+      return kept;
+    }
+
+    if (grp.Group_Type__c == 'Custom_Field') {
+      Set<String> values = csvToSet(grp.Group_Field_Values__c);
+      if (values.isEmpty() || String.isBlank(grp.Group_Field__c)) {
+        return pipelineRecords;
+      }
+      // Opportunity custom field — read the field directly off each pipeline record.
+      if (
+        grp.Group_Source_Object__c == null ||
+        grp.Group_Source_Object__c == 'Opportunity'
+      ) {
+        List<SObject> kept = new List<SObject>();
+        for (SObject rec : pipelineRecords) {
+          try {
+            String v = String.valueOf(rec.get(grp.Group_Field__c));
+            if (v != null && values.contains(v)) {
+              kept.add(rec);
+            }
+          } catch (Exception ex) {
+            // Field wasn't in the pipeline query; skip filter for this row
+            kept.add(rec);
+          }
+        }
+        return kept;
+      }
+      // Child object custom field — query child for matching opp Ids.
+      Set<Id> matchingOppIds;
+      try {
+        matchingOppIds = ChildObjectQueryService.findOpportunitiesByChildField(
+          grp.Group_Source_Object__c,
+          grp.Group_Lookup_Field__c,
+          grp.Group_Field__c,
+          new List<String>(values)
+        );
+      } catch (Exception ex) {
+        return pipelineRecords; // fail open
+      }
+      if (matchingOppIds == null || matchingOppIds.isEmpty()) {
+        return new List<SObject>();
+      }
+      List<SObject> kept = new List<SObject>();
+      for (SObject rec : pipelineRecords) {
+        if (matchingOppIds.contains(rec.Id)) {
+          kept.add(rec);
+        }
+      }
+      return kept;
+    }
+    return pipelineRecords;
+  }
+
+  /**
+   * @description Convert a CSV LongTextArea value into a trimmed Set of strings.
+   */
+  private static Set<String> csvToSet(String csv) {
+    Set<String> result = new Set<String>();
+    if (String.isBlank(csv)) {
+      return result;
+    }
+    for (String s : csv.split(',')) {
+      String t = s.trim();
+      if (String.isNotBlank(t)) {
+        result.add(t);
+      }
+    }
+    return result;
+  }
+
+  // ══════════════════════════════════════════════════════════════════════
+  //  PHASE C: Final / Stretch totals + horizon helpers
+  // ══════════════════════════════════════════════════════════════════════
+
+  /**
+   * @description Phase C: Sum metric_1 (primary metric) across the records,
+   *              partitioned by category, and roll up to Final and Stretch
+   *              totals based on Forecast_Category__c flags.
+   *
+   *              - finalForecast = sum of categories where Counts_Toward_Target__c = true
+   *              - stretchForecast = sum of categories where Counts_Toward_Stretch__c = true
+   *
+   *              Labels are pulled from config (Final_Forecast_Label__c /
+   *              Stretch_Forecast_Label__c) with sensible defaults.
+   */
+  private static void populateFinalAndStretchTotals(
+    ForecastController.ForecastSummaryDTO summary,
+    List<ForecastController.ForecastRecordDTO> records
+  ) {
+    if (summary == null) {
+      return;
+    }
+    Forecast_Configuration__c cfg = ForecastDataService.getActiveConfig();
+    if (cfg == null) {
+      return;
+    }
+
+    summary.finalLabel = String.isNotBlank(cfg.Final_Forecast_Label__c)
+      ? cfg.Final_Forecast_Label__c
+      : 'Final Forecast';
+    summary.stretchLabel = String.isNotBlank(cfg.Stretch_Forecast_Label__c)
+      ? cfg.Stretch_Forecast_Label__c
+      : 'Stretch Forecast';
+    summary.finalForecast = 0;
+    summary.stretchForecast = 0;
+
+    if (
+      cfg.Forecast_Categories__r == null || cfg.Forecast_Categories__r.isEmpty()
+    ) {
+      return;
+    }
+
+    // Build category flag lookups keyed by API name (matches DTO.category)
+    Set<String> finalCats = new Set<String>();
+    Set<String> stretchCats = new Set<String>();
+    for (Forecast_Category__c cat : cfg.Forecast_Categories__r) {
+      String key = cat.Category_API_Name__c != null
+        ? cat.Category_API_Name__c
+        : cat.Name;
+      if (cat.Counts_Toward_Target__c == true) {
+        finalCats.add(key);
+      }
+      if (cat.Counts_Toward_Stretch__c == true) {
+        stretchCats.add(key);
+      }
+    }
+
+    // Use summary.categoryTotals when available (already aggregated); otherwise
+    // compute from records. summary.categoryTotals is keyed by category API name.
+    Map<String, Decimal> totals = summary.categoryTotals != null
+      ? summary.categoryTotals
+      : new Map<String, Decimal>();
+
+    if (totals.isEmpty() && records != null) {
+      // Aggregate metric_1 by category from records (fallback path)
+      for (ForecastController.ForecastRecordDTO rec : records) {
+        if (rec == null || rec.category == null) {
+          continue;
+        }
+        Decimal v = (rec.metricValues != null &&
+          rec.metricValues.containsKey('metric_1'))
+          ? rec.metricValues.get('metric_1')
+          : null;
+        if (v == null) {
+          continue;
+        }
+        Decimal existing = totals.containsKey(rec.category)
+          ? totals.get(rec.category)
+          : 0;
+        totals.put(rec.category, existing + v);
+      }
+    }
+
+    Decimal fSum = 0;
+    Decimal sSum = 0;
+    for (String cat : totals.keySet()) {
+      Decimal v = totals.get(cat);
+      if (v == null) {
+        continue;
+      }
+      if (finalCats.contains(cat)) {
+        fSum += v;
+      }
+      if (stretchCats.contains(cat)) {
+        sSum += v;
+      }
+    }
+    summary.finalForecast = fSum;
+    summary.stretchForecast = sSum;
+  }
+
+  /**
+   * @description Phase C: Resolve the horizon for this query.
+   *              Falls back to the active config's Default_Horizon__c when
+   *              the request didn't specify one.
+   */
+  private static String resolveHorizon(String requestHorizon) {
+    if (String.isNotBlank(requestHorizon)) {
+      return requestHorizon;
+    }
+    Forecast_Configuration__c cfg = ForecastDataService.getActiveConfig();
+    if (cfg != null && String.isNotBlank(cfg.Default_Horizon__c)) {
+      return cfg.Default_Horizon__c;
+    }
+    return 'Current_Period';
+  }
+
+  /**
+   * @description Phase C: Number of EXTRA periods (beyond the current period)
+   *              that a horizon spans. 0 means single-period mode (editable).
+   */
+  private static Integer horizonForwardPeriodCount(String horizon) {
+    if (horizon == 'Current_Plus_Next') {
+      return 1;
+    }
+    if (horizon == 'Quarter') {
+      return 2;
+    } // current + 2 = 3 months
+    if (horizon == 'Quarter_Plus_Next') {
+      return 5;
+    } // current + 5 = 6 months
+    if (horizon == 'Fiscal_Year') {
+      return 11;
+    } // current + 11 = 12 months
+    if (horizon == 'Custom') {
+      Forecast_Configuration__c cfg = ForecastDataService.getActiveConfig();
+      Integer n = cfg != null &&
+        cfg.Custom_Horizon_Periods__c != null
+        ? cfg.Custom_Horizon_Periods__c.intValue()
+        : 1;
+      return Math.max(0, n - 1);
+    }
+    return 0; // Current_Period
+  }
+
+  /**
+   * @description Phase C: For multi-period horizons, aggregate additional periods'
+   *              records into the summary's category totals and recompute Final/Stretch.
+   *              Read-only by definition \u2014 no editing across horizons.
+   */
+  private static void aggregateAdditionalPeriodsIntoSummary(
+    ForecastController.ForecastSummaryDTO summary,
+    ForecastController.ForecastQueryRequest baseRequest,
+    Integer extraPeriodsForward
+  ) {
+    if (summary == null || baseRequest == null || extraPeriodsForward <= 0) {
+      return;
+    }
+    if (summary.categoryTotals == null) {
+      summary.categoryTotals = new Map<String, Decimal>();
+    }
+    if (summary.categoryCounts == null) {
+      summary.categoryCounts = new Map<String, Integer>();
+    }
+
+    // Find next N periods after the base period (ordered by start date)
+    Forecast_Period__c basePeriod;
+    try {
+      basePeriod = [
+        SELECT Id, Start_Date__c
+        FROM Forecast_Period__c
+        WHERE Id = :baseRequest.periodId
+        LIMIT 1
+      ];
+    } catch (Exception ex) {
+      return;
+    }
+    if (basePeriod == null || basePeriod.Start_Date__c == null) {
+      return;
+    }
+
+    List<Forecast_Period__c> nextPeriods = [
+      SELECT Id
+      FROM Forecast_Period__c
+      WHERE Start_Date__c > :basePeriod.Start_Date__c
+      ORDER BY Start_Date__c ASC
+      LIMIT :extraPeriodsForward
+    ];
+    if (nextPeriods.isEmpty()) {
+      return;
+    }
+
+    for (Forecast_Period__c p : nextPeriods) {
+      ForecastController.ForecastQueryRequest req = new ForecastController.ForecastQueryRequest();
+      req.periodId = p.Id;
+      req.participantId = baseRequest.participantId;
+      req.scopeId = baseRequest.scopeId;
+      req.groupId = baseRequest.groupId;
+      // Skip horizon to avoid recursion
+      try {
+        ForecastController.ForecastRecordSet rs = queryForecastRecords(req);
+        if (
+          rs != null &&
+          rs.summary != null &&
+          rs.summary.categoryTotals != null
+        ) {
+          for (String cat : rs.summary.categoryTotals.keySet()) {
+            Decimal v = rs.summary.categoryTotals.get(cat);
+            if (v == null) {
+              continue;
+            }
+            Decimal existing = summary.categoryTotals.containsKey(cat)
+              ? summary.categoryTotals.get(cat)
+              : 0;
+            summary.categoryTotals.put(cat, existing + v);
+            // Counts: also accumulate
+            Integer c = rs.summary.categoryCounts != null &&
+              rs.summary.categoryCounts.containsKey(cat)
+              ? rs.summary.categoryCounts.get(cat)
+              : 0;
+            Integer existingC = summary.categoryCounts.containsKey(cat)
+              ? summary.categoryCounts.get(cat)
+              : 0;
+            summary.categoryCounts.put(cat, existingC + c);
+          }
+        }
+      } catch (Exception ex) {
+        // Skip period on error
+      }
+    }
+
+    // Recompute Final / Stretch from the now-aggregated category totals
+    populateFinalAndStretchTotals(summary, null);
   }
 
   /**
@@ -2799,6 +3729,19 @@ public with sharing class ForecastService {
     Id participantId,
     Id periodId
   ) {
+    return computeSummaryFromRecords(records, participantId, periodId, null);
+  }
+
+  /**
+   * @description Phase B: group-aware overload. Plumbs groupId through to
+   *              loadAttainmentData() for per-group quota resolution.
+   */
+  private static ForecastController.ForecastSummaryDTO computeSummaryFromRecords(
+    List<ForecastController.ForecastRecordDTO> records,
+    Id participantId,
+    Id periodId,
+    Id groupId
+  ) {
     ForecastController.ForecastSummaryDTO summary = new ForecastController.ForecastSummaryDTO();
     summary.categoryTotals = new Map<String, Decimal>();
     summary.categoryCounts = new Map<String, Integer>();
@@ -2837,9 +3780,11 @@ public with sharing class ForecastService {
         LIMIT 1
       ];
       if (participant != null) {
+        // Phase B: group-aware quota resolution (group-specific wins, then config-wide)
         AttainmentData attData = loadAttainmentData(
           participant.User__c,
-          periodId
+          periodId,
+          groupId
         );
         summary.target = attData.target;
         summary.achieved = attData.achieved;

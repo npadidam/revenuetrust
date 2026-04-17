@@ -1,6 +1,13 @@
 <template>
   <div class="multi-select-container" onfocusout={handleFocusOut}>
-    <label lwc:if={label} class="slds-form-element__label">{label}</label>
+    <template lwc:if={label}>
+      <label class="slds-form-element__label">
+        {label}
+        <template lwc:if={showHelp}>
+          <lightning-helptext content={fieldLevelHelp}></lightning-helptext>
+        </template>
+      </label>
+    </template>
     <div class="slds-combobox-group">
       <div
         class={comboboxClass}
@@ -27,9 +34,9 @@
             class="slds-icon_container slds-icon-utility-down slds-input__icon slds-input__icon_right"
           >
             <lightning-icon
-              icon-name="utility:down"
+              icon-name="utility:search"
               size="xx-small"
-              alternative-text="Show options"
+              alternative-text="Search"
             ></lightning-icon>
           </span>
         </div>
@@ -38,22 +45,24 @@
           class="slds-dropdown slds-dropdown_length-7 slds-dropdown_fluid"
           role="listbox"
         >
-          <div
-            class="slds-p-horizontal_x-small slds-p-vertical_xx-small action-bar"
-          >
-            <lightning-button
-              label="Select All"
-              variant="base"
-              onclick={handleSelectAll}
-              class="slds-m-right_x-small action-btn"
-            ></lightning-button>
-            <lightning-button
-              label="Clear All"
-              variant="base"
-              onclick={handleClearAll}
-              class="action-btn"
-            ></lightning-button>
-          </div>
+          <template lwc:if={showBulkActions}>
+            <div
+              class="slds-p-horizontal_x-small slds-p-vertical_xx-small action-bar"
+            >
+              <lightning-button
+                label="Select All"
+                variant="base"
+                onclick={handleSelectAll}
+                class="slds-m-right_x-small action-btn"
+              ></lightning-button>
+              <lightning-button
+                label="Clear All"
+                variant="base"
+                onclick={handleClearAll}
+                class="action-btn"
+              ></lightning-button>
+            </div>
+          </template>
           <ul class="slds-listbox slds-listbox_vertical" role="presentation">
             <template for:each={filteredOptions} for:item="opt">
               <li

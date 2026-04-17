@@ -1,0 +1,10 @@
+:host {
+  display: block;
+}
+
+/* Impact warning highlight on fields that affect live data */
+lightning-combobox[data-field="periodType"],
+lightning-combobox[data-field="currencyMode"],
+lightning-combobox[data-field="scopeDetermination"] {
+  --slds-c-input-color-border: #f2cf00;
+}

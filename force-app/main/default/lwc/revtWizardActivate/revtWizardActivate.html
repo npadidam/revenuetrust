@@ -1,0 +1,211 @@
+<template>
+  <!-- Step 10: Display Fields -->
+  <template if:true={isStep10}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+      Forecast Grid Fields
+    </h2>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+      Choose which fields appear in the forecast grid. System fields are always
+      shown. Add custom fields from Opportunity or child objects.
+    </p>
+
+    <!-- System fields (non-removable) -->
+    <h3 class="slds-text-title_caps slds-m-bottom_x-small">
+      System Fields (always shown)
+    </h3>
+    <div class="slds-box slds-m-bottom_medium slds-theme_shade">
+      <template for:each={systemFields} for:item="sf">
+        <span
+          key={sf.fieldApiName}
+          class="slds-badge slds-m-right_x-small slds-m-bottom_xx-small"
+        >
+          {sf.label} ({sf.objectApiName}.{sf.fieldApiName})
+        </span>
+      </template>
+    </div>
+
+    <!-- Custom fields -->
+    <h3 class="slds-text-title_caps slds-m-bottom_x-small">
+      Additional Fields
+    </h3>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_x-small">
+      Add fields to display in the main grid or expanded detail row. Max 8 in
+      main grid, 15 in expanded.
+    </p>
+
+    <template for:each={displayFieldRows} for:item="df">
+      <div
+        key={df._idx}
+        class="slds-box slds-m-bottom_x-small slds-p-around_small"
+      >
+        <div class="slds-grid slds-gutters_small slds-grid_vertical-align-end">
+          <div class="slds-col slds-size_3-of-12">
+            <lightning-input
+              label="Label"
+              value={df.fieldLabel}
+              data-idx={df._idx}
+              data-field="fieldLabel"
+              onchange={handleDisplayFieldChange}
+              field-level-help="Column header in the forecast grid."
+            ></lightning-input>
+          </div>
+          <div class="slds-col slds-size_3-of-12">
+            <c-revt-multi-select
+              label="Source Object"
+              value={df.objectApiName}
+              options={sourceObjectOptions}
+              data-idx={df._idx}
+              data-field="objectApiName"
+              onchange={handleDisplayFieldChange}
+              placeholder="Search objects..."
+              single-select
+              field-level-help="Which object this field comes from."
+            ></c-revt-multi-select>
+          </div>
+          <div class="slds-col slds-size_3-of-12">
+            <c-revt-multi-select
+              label="Field"
+              value={df.fieldApiName}
+              options={df._fieldOptions}
+              data-idx={df._idx}
+              data-field="fieldApiName"
+              onchange={handleDisplayFieldChange}
+              placeholder="Search fields..."
+              single-select
+              field-level-help="The field to display in this column."
+            ></c-revt-multi-select>
+          </div>
+          <div class="slds-col slds-size_2-of-12">
+            <lightning-combobox
+              label="Display"
+              value={df.displayLocation}
+              options={locationOptions}
+              data-idx={df._idx}
+              data-field="displayLocation"
+              onchange={handleDisplayFieldChange}
+              field-level-help="Main Grid: always visible. Expanded Detail: shown when row expanded."
+            ></lightning-combobox>
+          </div>
+          <div class="slds-col slds-size_1-of-12 slds-text-align_right">
+            <lightning-button-icon
+              icon-name="utility:delete"
+              variant="bare"
+              alternative-text="Remove"
+              title="Remove field"
+              data-idx={df._idx}
+              onclick={handleRemoveDisplayField}
+            ></lightning-button-icon>
+          </div>
+        </div>
+      </div>
+    </template>
+
+    <lightning-button
+      label="+ Add Field"
+      variant="neutral"
+      icon-name="utility:add"
+      onclick={handleAddDisplayField}
+      class="slds-m-top_x-small"
+    ></lightning-button>
+  </template>
+
+  <!-- Step 11: Attainment Source -->
+  <template if:true={isStep11}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+      Attainment Source
+    </h2>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+      How should achieved amount (attainment) be calculated?
+    </p>
+    <lightning-radio-group
+      label="Attainment Source"
+      options={attainmentOptions}
+      value={wizardData.attainmentSource}
+      type="radio"
+      onchange={handleAttainmentChange}
+    ></lightning-radio-group>
+  </template>
+
+  <!-- Step 12: Review & Activate -->
+  <template if:true={isStep12}>
+    <h2 class="slds-text-heading_medium slds-m-bottom_small">
+      Review & Activate
+    </h2>
+    <p class="slds-text-body_small slds-text-color_weak slds-m-bottom_medium">
+      Review your configuration and click Activate to start forecasting.
+    </p>
+
+    <div class="review-grid">
+      <div class="review-section">
+        <h3 class="review-label">Hierarchy</h3>
+        <p class="review-value">{wizardData.hierarchySource}</p>
+      </div>
+      <div class="review-section">
+        <h3 class="review-label">Period Type</h3>
+        <p class="review-value">
+          {wizardData.periodType} ({wizardData.futurePeriods} future periods)
+        </p>
+      </div>
+      <div class="review-section">
+        <h3 class="review-label">Currency</h3>
+        <p class="review-value">
+          {wizardData.currencyMode} ({wizardData.corporateCurrency})
+        </p>
+      </div>
+      <div class="review-section">
+        <h3 class="review-label">Attainment</h3>
+        <p class="review-value">{attainmentLabel}</p>
+      </div>
+      <div class="review-section">
+        <h3 class="review-label">Metrics</h3>
+        <p class="review-value">{metricsCount} configured</p>
+        <ul class="review-list">
+          <template for:each={metricsSummary} for:item="ms">
+            <li key={ms.key}>{ms.text}</li>
+          </template>
+        </ul>
+      </div>
+      <div class="review-section">
+        <h3 class="review-label">Categories</h3>
+        <p class="review-value">{categoriesCount} configured</p>
+        <div class="review-cats">
+          <template for:each={wizardData.categories} for:item="cat">
+            <span
+              key={cat.sortOrder}
+              class="review-cat-pill"
+              style={cat._colorStyle}
+            >
+              {cat.label}
+            </span>
+          </template>
+        </div>
+      </div>
+      <div class="review-section">
+        <h3 class="review-label">Display Fields</h3>
+        <p class="review-value">
+          {displayFieldsCount} fields (4 system + custom)
+        </p>
+      </div>
+      <div class="review-section">
+        <h3 class="review-label">Top-Level Action</h3>
+        <p class="review-value">{wizardData.topLevelLockLabel}</p>
+      </div>
+      <div class="review-section">
+        <h3 class="review-label">Participants</h3>
+        <p class="review-value">Auto-sync from hierarchy</p>
+        <p class="review-detail">
+          {participantPreview}. You can manage participants after activation via
+          the Admin Console.
+        </p>
+      </div>
+    </div>
+
+    <div class="slds-m-top_medium">
+      <lightning-input
+        label="Configuration Name"
+        value={wizardData.configName}
+        onchange={handleConfigNameChange}
+      ></lightning-input>
+    </div>
+  </template>
+</template>

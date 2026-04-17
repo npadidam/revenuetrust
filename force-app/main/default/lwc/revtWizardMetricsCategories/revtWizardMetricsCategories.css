@@ -1,0 +1,35 @@
+.metric-row {
+  align-items: flex-end;
+  padding: 4px 0;
+  border-bottom: 1px solid #f3f3f3;
+}
+.metric-card {
+  background-color: #ffffff;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 12px 12px 8px;
+}
+.slds-align-bottom {
+  align-self: flex-end;
+}
+.filter-row {
+  align-items: center;
+  background-color: #fafafa;
+  padding: 4px;
+  border-radius: 3px;
+}
+.slds-border_top {
+  border-top: 1px solid #e5e5e5;
+}
+.cat-row {
+  align-items: center;
+  padding: 4px 0;
+  border-bottom: 1px solid #f3f3f3;
+}
+.cat-color {
+  width: 6px;
+  height: 32px;
+  border-radius: 3px;
+  flex-shrink: 0;
+  margin-right: 8px;
+}

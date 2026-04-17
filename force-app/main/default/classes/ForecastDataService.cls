@@ -241,6 +241,20 @@ public with sharing class ForecastDataService {
         Hourly_Snapshot_Interval__c,
         Scope_Determination__c,
         Attainment_Source__c,
+        Past_Periods_Visible__c,
+        Default_Horizon__c,
+        Custom_Horizon_Periods__c,
+        Final_Forecast_Label__c,
+        Stretch_Forecast_Label__c,
+        Level_Labels__c,
+        Forecast_Cadence__c,
+        Submission_Deadline_Day__c,
+        Cadence_Anchor_Date__c,
+        Auto_Freeze_On_Deadline__c,
+        Scope_Custom_Object__c,
+        Scope_Custom_Field__c,
+        Fiscal_Year_Start_Month__c,
+        Summary_All_Metrics__c,
         (
           SELECT
             Id,
@@ -252,7 +266,11 @@ public with sharing class ForecastDataService {
             Is_Required__c,
             Sort_Order__c,
             Is_Editable__c,
-            Source_Field__c
+            Source_Field__c,
+            Source_Object__c,
+            Source_Lookup_Field__c,
+            Aggregation__c,
+            Forecast_Group__c
           FROM Forecast_Metrics__r
           ORDER BY Sort_Order__c ASC
         ),
@@ -264,6 +282,7 @@ public with sharing class ForecastDataService {
             Category_API_Name__c,
             Color_Hex__c,
             Counts_Toward_Target__c,
+            Counts_Toward_Stretch__c,
             Is_Terminal__c,
             Is_High_Confidence__c,
             Regression_Warning__c,
@@ -391,6 +410,77 @@ public with sharing class ForecastDataService {
     return resultMap;
   }
 
+  /**
+   * @description Get a Forecast_Quota__c record for a user and period.
+   *              Used by ForecastService.loadAttainmentData() when
+   *              Attainment_Source__c includes Forecast_Quota__c.
+   * @param userId The User Id
+   * @param periodId The Forecast_Period__c Id
+   * @return The matching Forecast_Quota__c or null
+   */
+  public static Forecast_Quota__c getForecastQuota(Id userId, Id periodId) {
+    return getForecastQuota(userId, periodId, null);
+  }
+
+  /**
+   * @description Phase B: Group-aware quota resolution.
+   *              Returns the most-specific quota matching (user, period, group):
+   *              1. group-specific quota wins
+   *              2. config-wide quota (Forecast_Group__c = null) is fallback
+   *              3. null if neither exists
+   *              When groupId is null, only config-wide quota is returned.
+   */
+  public static Forecast_Quota__c getForecastQuota(
+    Id userId,
+    Id periodId,
+    Id groupId
+  ) {
+    // Try group-specific first
+    if (groupId != null) {
+      List<Forecast_Quota__c> groupQuotas = [
+        SELECT
+          Id,
+          User__c,
+          Forecast_Period__c,
+          Forecast_Group__c,
+          Target_Amount__c,
+          Achieved_Amount__c,
+          Attainment_Pct__c,
+          Status__c
+        FROM Forecast_Quota__c
+        WHERE
+          User__c = :userId
+          AND Forecast_Period__c = :periodId
+          AND Forecast_Group__c = :groupId
+          AND Status__c = 'Active'
+        LIMIT 1
+      ];
+      if (!groupQuotas.isEmpty()) {
+        return groupQuotas[0];
+      }
+    }
+    // Fall back to config-wide (Forecast_Group__c = null)
+    List<Forecast_Quota__c> wideQuotas = [
+      SELECT
+        Id,
+        User__c,
+        Forecast_Period__c,
+        Forecast_Group__c,
+        Target_Amount__c,
+        Achieved_Amount__c,
+        Attainment_Pct__c,
+        Status__c
+      FROM Forecast_Quota__c
+      WHERE
+        User__c = :userId
+        AND Forecast_Period__c = :periodId
+        AND Forecast_Group__c = NULL
+        AND Status__c = 'Active'
+      LIMIT 1
+    ];
+    return wideQuotas.isEmpty() ? null : wideQuotas[0];
+  }
+
   // ── Private helpers ────────────────────────────────────────────────
 
   /**
@@ -452,6 +542,68 @@ public with sharing class ForecastDataService {
       'IsWon',
       'LastModifiedDate'
     };
+    // Phase B: include RecordType + Type only if they exist on this org's Opportunity
+    // (some test contexts and slim orgs don't have RT enabled).
+    Map<String, Schema.SObjectField> oppFields = Opportunity.SObjectType.getDescribe()
+      .fields.getMap();
+    if (oppFields.containsKey('recordtypeid')) {
+      fields.add('RecordTypeId');
+      fields.add('RecordType.DeveloperName');
+    }
+    if (oppFields.containsKey('type')) {
+      fields.add('Type');
+    }
+    // Phase D: Add configured display fields from Forecast_Display_Field__c
+    Forecast_Configuration__c activeCfg = getActiveConfig();
+    if (activeCfg != null) {
+      Map<String, Schema.SObjectField> oppFields2 = Opportunity.SObjectType.getDescribe()
+        .fields.getMap();
+      for (Forecast_Display_Field__c df : [
+        SELECT Field_API_Name__c, Object_API_Name__c
+        FROM Forecast_Display_Field__c
+        WHERE Forecast_Configuration__c = :activeCfg.Id AND Is_Active__c = TRUE
+      ]) {
+        String srcObj = df.Object_API_Name__c;
+        String field = df.Field_API_Name__c;
+        if (String.isBlank(field)) {
+          continue;
+        }
+
+        if (srcObj == 'Opportunity') {
+          // Direct Opportunity field
+          if (oppFields2.containsKey(field.toLowerCase())) {
+            fields.add(field);
+            Schema.DescribeFieldResult fieldDesc = oppFields2.get(
+                field.toLowerCase()
+              )
+              .getDescribe();
+            if (fieldDesc.getType() == Schema.DisplayType.REFERENCE) {
+              String relName = fieldDesc.getRelationshipName();
+              if (relName != null) {
+                fields.add(relName + '.Name');
+              }
+            }
+          }
+        } else {
+          // Parent object field (e.g., Account.Industry, Campaign.Name)
+          // Find the lookup field on Opportunity that points to this parent object
+          for (Schema.SObjectField oppF : oppFields2.values()) {
+            Schema.DescribeFieldResult fDesc = oppF.getDescribe();
+            if (fDesc.getType() != Schema.DisplayType.REFERENCE) {
+              continue;
+            }
+            List<Schema.SObjectType> refs = fDesc.getReferenceTo();
+            if (!refs.isEmpty() && refs[0].getDescribe().getName() == srcObj) {
+              String relName = fDesc.getRelationshipName();
+              if (relName != null) {
+                fields.add(relName + '.' + field);
+              }
+              break;
+            }
+          }
+        }
+      }
+    }
     return String.join(new List<String>(fields), ', ');
   }
 
@@ -461,5 +613,13 @@ public with sharing class ForecastDataService {
   @TestVisible
   private static void resetCache() {
     cachedConfig = null;
+  }
+
+  /**
+   * @description Public cache invalidation. Called by Admin Console and
+   *              Onboarding Controller after config changes.
+   */
+  public static void clearConfigCache() {
+    resetCache();
   }
 }

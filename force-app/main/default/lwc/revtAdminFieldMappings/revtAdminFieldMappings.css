@@ -1,0 +1,13 @@
+:host {
+  display: block;
+}
+
+/* Compact datatable rows */
+lightning-datatable {
+  --lwc-fontSize3: 0.8125rem;
+}
+
+/* Deploy spinner inline layout */
+.slds-align_absolute-center {
+  min-height: 48px;
+}

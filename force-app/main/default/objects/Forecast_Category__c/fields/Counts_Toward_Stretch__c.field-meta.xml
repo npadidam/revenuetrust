@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<CustomField xmlns="http://soap.sforce.com/2006/04/metadata">
+    <fullName>Counts_Toward_Stretch__c</fullName>
+    <label>Counts Toward Stretch Forecast</label>
+    <description
+  >Phase C: Independent flag for Stretch Forecast totals. Counts_Toward_Target__c remains the canonical "Final Forecast" flag (no rename).</description>
+    <inlineHelpText
+  >Include this category in the Stretch Forecast total. Independent of "Counts Toward Target" (which drives Final Forecast).</inlineHelpText>
+    <type>Checkbox</type>
+    <defaultValue>false</defaultValue>
+</CustomField>
